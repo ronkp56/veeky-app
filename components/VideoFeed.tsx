@@ -11,11 +11,24 @@ export default function VideoFeed({ filter = 'All' }: VideoFeedProps) {
   const data = [
     {
       id: '1',
-      uri: 'https://res.cloudinary.com/dmxzi7dvx/video/upload/v1755583223/zwbbwckjrgjcrih4iuxj.mp4',
+      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
       category: 'Trips',
     },
-    { id: '2', uri: 'https://www.w3schools.com/html/movie.mp4', category: 'Lodging' },
-    { id: '3', uri: 'https://www.w3schools.com/html/mov_bbb.mp4', category: 'Entertainment' },
+    {
+      id: '2', 
+      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', 
+      category: 'Lodging' 
+    },
+    {
+      id: '3', 
+      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', 
+      category: 'Entertainment' 
+    },
+    {
+      id: '4', 
+      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4', 
+      category: 'Trips' 
+    },
   ];
 
   // ✅ Optional filtering logic (keeps it future-ready)
