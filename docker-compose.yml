@@ -1,0 +1,17 @@
+# docker-compose.yml
+version: "3.9"
+
+services:
+  veeky-app:
+    build: .
+    ports:
+      - "19000:19000"
+      - "19001:19001"
+      - "19002:19002"
+      - "19006:19006"
+      - "8081:8081"
+    environment:
+      - NODE_ENV=development
+      # - CI=1
+    stdin_open: true
+    tty: true

@@ -1,0 +1,8 @@
+node_modules
+.git
+.env
+dist
+.expo
+.expo-shared
+.vscode
+.idea
