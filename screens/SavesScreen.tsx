@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import { MOCK_DATA } from '../components/VideoFeed';
@@ -58,8 +58,14 @@ export default function SavesScreen() {
               }}
             >
               <View style={styles.thumbnail}>
-                <Text style={styles.thumbnailEmoji}>{getThumbnailForLocation(item.location)}</Text>
-                <Text style={styles.thumbnailCategory}>{item.category}</Text>
+                <Image 
+                  source={{ uri: getThumbnailForLocation(item.location) }} 
+                  style={styles.thumbnailImage}
+                  resizeMode="cover"
+                />
+                <View style={styles.overlay}>
+                  <Text style={styles.thumbnailCategory}>{item.category}</Text>
+                </View>
               </View>
               <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
               <Text style={styles.videoPrice}>{item.price}</Text>
@@ -131,17 +137,26 @@ const styles = StyleSheet.create({
     aspectRatio: 9 / 16,
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    overflow: 'hidden',
     marginBottom: 4,
   },
-  thumbnailEmoji: {
-    fontSize: 40,
-    marginBottom: 8,
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   thumbnailCategory: {
-    color: '#888',
-    fontSize: 10,
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '600',
   },
   videoTitle: {
     color: '#fff',

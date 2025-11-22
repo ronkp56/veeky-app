@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { MOCK_DATA } from '../components/VideoFeed';
@@ -48,8 +48,14 @@ export default function InfluencerScreen({ route, navigation }: Props) {
             }}
           >
             <View style={styles.thumbnail}>
-              <Text style={styles.thumbnailEmoji}>{getThumbnailForLocation(item.location)}</Text>
-              <Text style={styles.thumbnailCategory}>{item.category}</Text>
+              <Image 
+                source={{ uri: getThumbnailForLocation(item.location) }} 
+                style={styles.thumbnailImage}
+                resizeMode="cover"
+              />
+              <View style={styles.overlay}>
+                <Text style={styles.thumbnailCategory}>{item.category}</Text>
+              </View>
             </View>
             <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
             <Text style={styles.videoPrice}>{item.price}</Text>
@@ -70,9 +76,10 @@ const styles = StyleSheet.create({
   name: { color: '#fff', fontSize: 20, fontWeight: '700', marginBottom: 4 },
   stats: { color: '#888', fontSize: 14 },
   videoCard: { width: itemWidth, padding: 1 },
-  thumbnail: { width: '100%', aspectRatio: 9 / 16, backgroundColor: '#1a1a1a', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
-  thumbnailEmoji: { fontSize: 40, marginBottom: 8 },
-  thumbnailCategory: { color: '#888', fontSize: 10 },
+  thumbnail: { width: '100%', aspectRatio: 9 / 16, backgroundColor: '#1a1a1a', borderRadius: 8, overflow: 'hidden', marginBottom: 4 },
+  thumbnailImage: { width: '100%', height: '100%' },
+  overlay: { position: 'absolute', bottom: 4, left: 4, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  thumbnailCategory: { color: '#fff', fontSize: 9, fontWeight: '600' },
   videoTitle: { color: '#fff', fontSize: 11, marginBottom: 2 },
   videoPrice: { color: '#00D5FF', fontSize: 12, fontWeight: '600' },
 });
