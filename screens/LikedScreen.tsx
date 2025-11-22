@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { MOCK_DATA } from '../components/VideoFeed';
 import { storage } from '../utils/storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -8,6 +10,7 @@ const { width } = Dimensions.get('window');
 const itemWidth = (width - 4) / 3;
 
 export default function LikedScreen() {
+  const navigation = useNavigation();
   const [likedIds, setLikedIds] = useState<string[]>([]);
   
   useFocusEffect(
@@ -21,8 +24,13 @@ export default function LikedScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>אהבתי</Text>
-        <Text style={styles.count}>{likedVideos.length} סרטונים</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>אהבתי</Text>
+          <Text style={styles.count}>{likedVideos.length} סרטונים</Text>
+        </View>
       </View>
       
       {likedVideos.length === 0 ? (
@@ -54,7 +62,9 @@ export default function LikedScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  header: { padding: 16, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#222' },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 16, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#222', gap: 12 },
+  backBtn: { padding: 4 },
+  headerText: { flex: 1 },
   title: { color: '#fff', fontSize: 24, fontWeight: '700' },
   count: { color: '#888', fontSize: 14, marginTop: 4 },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 },
