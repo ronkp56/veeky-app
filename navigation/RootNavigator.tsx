@@ -12,10 +12,6 @@ import SavesScreen from '../screens/SavesScreen';
 import LikedScreen from '../screens/LikedScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-
-// If you’ll later add Orders, Saves, AddVideo screens:
-import OrdersScreen from '../screens/OrdersScreen';
-import SavesScreen from '../screens/SavesScreen';
 import AddVideoScreen from '../screens/AddVideoScreen';
 
 export type RootStackParamList = {
@@ -59,7 +55,6 @@ function MainTabs() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
-      // ✅ Add this listener
       screenListeners={{
         tabPress: () => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
