@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { VideoData } from './VideoFeed';
 import { storage } from '../utils/storage';
 import CommentsModal from './CommentsModal';
+import ItineraryModal from './ItineraryModal';
+import ItineraryModal from './ItineraryModal';
 
 const { height, width } = Dimensions.get('window');
 
@@ -22,6 +24,8 @@ export default function VideoItem({ video }: Props) {
   const [likesCount, setLikesCount] = useState(likes);
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [commentsCount, setCommentsCount] = useState(storage.getComments(video.id).length);
+  const [itineraryVisible, setItineraryVisible] = useState(false);
+  const [itineraryVisible, setItineraryVisible] = useState(false);
   
   const player = useVideoPlayer(uri, (player) => {
     player.loop = true;
@@ -115,9 +119,11 @@ export default function VideoItem({ video }: Props) {
             onComment={handleComments}
             onShare={() => console.log('Share')}
             onBook={() => console.log('Book')}
+            onDetails={() => setItineraryVisible(true)}
           />
         )}
         <CommentsModal visible={commentsVisible} videoId={video.id} onClose={handleCloseComments} />
+        <ItineraryModal visible={itineraryVisible} video={video} onClose={() => setItineraryVisible(false)} />
       </View>
     );
   }
@@ -143,8 +149,10 @@ export default function VideoItem({ video }: Props) {
         onComment={handleComments}
         onShare={() => console.log('Share')}
         onBook={() => console.log('Book')}
+        onDetails={() => setItineraryVisible(true)}
       />
       <CommentsModal visible={commentsVisible} videoId={video.id} onClose={handleCloseComments} />
+      <ItineraryModal visible={itineraryVisible} video={video} onClose={() => setItineraryVisible(false)} />
     </View>
   );
 }
@@ -160,9 +168,10 @@ type OverlayProps = {
   onComment: () => void;
   onShare: () => void;
   onBook: () => void;
+  onDetails: () => void;
 };
 
-function VideoOverlay({ video, isLiked, isSaved, likesCount, commentsCount, onLike, onSave, onComment, onShare, onBook }: OverlayProps) {
+function VideoOverlay({ video, isLiked, isSaved, likesCount, commentsCount, onLike, onSave, onComment, onShare, onBook, onDetails }: OverlayProps) {
   return (
     <View style={overlayStyles.container}>
       <View style={overlayStyles.rightActions}>
@@ -197,11 +206,17 @@ function VideoOverlay({ video, isLiked, isSaved, likesCount, commentsCount, onLi
         </View>
         
         <Text style={overlayStyles.title}>{video.title}</Text>
+        <Text style={overlayStyles.days}>🗓️ {video.days} ימים</Text>
         <Text style={overlayStyles.location}>📍 {video.location}</Text>
         
-        <TouchableOpacity style={overlayStyles.bookBtn} onPress={onBook}>
-          <Text style={overlayStyles.bookBtnText}>הזמן עכשיו • {video.price}</Text>
-        </TouchableOpacity>
+        <View style={overlayStyles.buttons}>
+          <TouchableOpacity style={overlayStyles.detailsBtn} onPress={onDetails}>
+            <Text style={overlayStyles.detailsBtnText}>פרטים</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={overlayStyles.bookBtn} onPress={onBook}>
+            <Text style={overlayStyles.bookBtnText}>הזמן • {video.price}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -310,6 +325,14 @@ const overlayStyles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
+  days: {
+    color: '#fff',
+    fontSize: 13,
+    marginBottom: 2,
+    textShadowColor: 'rgba(0,0,0,0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
   location: {
     color: '#fff',
     fontSize: 13,
@@ -318,12 +341,29 @@ const overlayStyles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
+  buttons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  detailsBtn: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  detailsBtnText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
   bookBtn: {
     backgroundColor: '#00D5FF',
     paddingVertical: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     borderRadius: 25,
-    alignSelf: 'flex-start',
+    flex: 1,
   },
   bookBtnText: {
     color: '#000',
