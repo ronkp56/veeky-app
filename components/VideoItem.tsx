@@ -1,5 +1,14 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions, Platform, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  Platform,
+  Text,
+  ActivityIndicator,
+  TouchableOpacity,
+  Pressable,
+} from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -14,11 +23,14 @@ const { height, width } = Dimensions.get('window');
 
 type Props = {
   video: VideoData;
+  isActive: boolean; // 🔑 comes from VideoFeed
 };
 
-export default function VideoItem({ video }: Props) {
+export default function VideoItem({ video, isActive }: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { uri, influencer, title, location, price, likes, comments, shares } = video;
+  const { uri, likes } = video;
+
+  // --- UI / state ---
   const videoRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -28,41 +40,57 @@ export default function VideoItem({ video }: Props) {
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [commentsCount, setCommentsCount] = useState(storage.getComments(video.id).length);
   const [itineraryVisible, setItineraryVisible] = useState(false);
-  
+
+  // --- Native video player (expo-video) ---
   const player = useVideoPlayer(uri, (player) => {
     player.loop = true;
-    player.play();
+    // we don't auto-play here, we do it in a useEffect
   });
 
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // 🔑 When this item becomes active/inactive, auto play / pause
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    if (isActive) {
+      player.play();
+      setIsPlaying(true);
+    } else {
+      player.pause();
+      setIsPlaying(false);
+    }
+  }, [isActive, player]);
+
+  // --- Web-specific video setup ---
   useEffect(() => {
     if (Platform.OS === 'web' && videoRef.current) {
-      const video = videoRef.current;
-      video.loop = true;
-      video.muted = true;
-      
+      const videoEl = videoRef.current as HTMLVideoElement;
+      videoEl.loop = true;
+      videoEl.muted = true;
+
       const handleLoadStart = () => setLoading(true);
       const handleCanPlay = () => setLoading(false);
       const handleError = () => {
         setError(true);
         setLoading(false);
       };
-      
-      video.onloadstart = handleLoadStart;
-      video.oncanplay = handleCanPlay;
-      video.onerror = handleError;
-      
-      video.play().catch(() => setError(true));
-      
+
+      videoEl.onloadstart = handleLoadStart;
+      videoEl.oncanplay = handleCanPlay;
+      videoEl.onerror = handleError;
+
+      videoEl.play().catch(() => setError(true));
+
       return () => {
-        if (video) {
-          video.onloadstart = null;
-          video.oncanplay = null;
-          video.onerror = null;
-        }
+        videoEl.onloadstart = null;
+        videoEl.oncanplay = null;
+        videoEl.onerror = null;
       };
     }
   }, [uri]);
 
+  // --- Buttons / overlay handlers ---
   const handleLike = () => {
     const liked = storage.toggleLike(video.id);
     setIsLiked(liked);
@@ -83,6 +111,21 @@ export default function VideoItem({ video }: Props) {
     setCommentsCount(storage.getComments(video.id).length);
   };
 
+  // 🔑 Single tap (native) toggles play/pause
+  const handleTogglePlay = () => {
+    if (Platform.OS === 'web') return;
+    if (!isActive) return; // ignore taps when this item is off-screen
+
+    if (isPlaying) {
+      player.pause();
+      setIsPlaying(false);
+    } else {
+      player.play();
+      setIsPlaying(true);
+    }
+  };
+
+  // --- WEB RENDER ---
   if (Platform.OS === 'web') {
     return (
       <View style={styles.container}>
@@ -111,7 +154,7 @@ export default function VideoItem({ video }: Props) {
           playsInline
         />
         {!loading && !error && (
-          <VideoOverlay 
+          <VideoOverlay
             video={video}
             isLiked={isLiked}
             isSaved={isSaved}
@@ -123,17 +166,28 @@ export default function VideoItem({ video }: Props) {
             onShare={() => console.log('Share')}
             onBook={() => console.log('Book')}
             onDetails={() => setItineraryVisible(true)}
-            onInfluencer={() => navigation.navigate('Influencer', { influencerId: video.influencer.id })}
+            onInfluencer={() =>
+              navigation.navigate('Influencer', { influencerId: video.influencer.id })
+            }
           />
         )}
-        <CommentsModal visible={commentsVisible} videoId={video.id} onClose={handleCloseComments} />
-        <ItineraryModal visible={itineraryVisible} video={video} onClose={() => setItineraryVisible(false)} />
+        <CommentsModal
+          visible={commentsVisible}
+          videoId={video.id}
+          onClose={handleCloseComments}
+        />
+        <ItineraryModal
+          visible={itineraryVisible}
+          video={video}
+          onClose={() => setItineraryVisible(false)}
+        />
       </View>
     );
   }
 
+  // --- NATIVE RENDER (iOS / Android) ---
   return (
-    <View style={styles.container}>
+    <Pressable style={styles.container} onPress={handleTogglePlay}>
       <VideoView
         style={styles.video}
         player={player}
@@ -142,7 +196,8 @@ export default function VideoItem({ video }: Props) {
         contentFit="cover"
         nativeControls={false}
       />
-      <VideoOverlay 
+
+      <VideoOverlay
         video={video}
         isLiked={isLiked}
         isSaved={isSaved}
@@ -154,11 +209,21 @@ export default function VideoItem({ video }: Props) {
         onShare={() => console.log('Share')}
         onBook={() => console.log('Book')}
         onDetails={() => setItineraryVisible(true)}
-        onInfluencer={() => navigation.navigate('Influencer', { influencerId: video.influencer.id })}
+        onInfluencer={() =>
+          navigation.navigate('Influencer', { influencerId: video.influencer.id })
+        }
       />
-      <CommentsModal visible={commentsVisible} videoId={video.id} onClose={handleCloseComments} />
-      <ItineraryModal visible={itineraryVisible} video={video} onClose={() => setItineraryVisible(false)} />
-    </View>
+      <CommentsModal
+        visible={commentsVisible}
+        videoId={video.id}
+        onClose={handleCloseComments}
+      />
+      <ItineraryModal
+        visible={itineraryVisible}
+        video={video}
+        onClose={() => setItineraryVisible(false)}
+      />
+    </Pressable>
   );
 }
 
@@ -177,31 +242,54 @@ type OverlayProps = {
   onInfluencer: () => void;
 };
 
-function VideoOverlay({ video, isLiked, isSaved, likesCount, commentsCount, onLike, onSave, onComment, onShare, onBook, onDetails, onInfluencer }: OverlayProps) {
+function VideoOverlay({
+  video,
+  isLiked,
+  isSaved,
+  likesCount,
+  commentsCount,
+  onLike,
+  onSave,
+  onComment,
+  onShare,
+  onBook,
+  onDetails,
+  onInfluencer,
+}: OverlayProps) {
   return (
-    <View style={overlayStyles.container}>
+    <View style={overlayStyles.container} pointerEvents="box-none">
+      {/* right actions */}
       <View style={overlayStyles.rightActions}>
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onLike}>
-          <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={32} color={isLiked ? '#FF3B5C' : '#fff'} />
+          <Ionicons
+            name={isLiked ? 'heart' : 'heart-outline'}
+            size={32}
+            color={isLiked ? '#FF3B5C' : '#fff'}
+          />
           <Text style={overlayStyles.actionText}>{formatCount(likesCount)}</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onComment}>
           <Ionicons name="chatbubble-outline" size={30} color="#fff" />
           <Text style={overlayStyles.actionText}>{formatCount(commentsCount)}</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onSave}>
-          <Ionicons name={isSaved ? 'bookmark' : 'bookmark-outline'} size={30} color={isSaved ? '#FFD700' : '#fff'} />
+          <Ionicons
+            name={isSaved ? 'bookmark' : 'bookmark-outline'}
+            size={30}
+            color={isSaved ? '#FFD700' : '#fff'}
+          />
           <Text style={overlayStyles.actionText}>שמור</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onShare}>
           <Ionicons name="share-outline" size={30} color="#fff" />
           <Text style={overlayStyles.actionText}>{formatCount(video.shares)}</Text>
         </TouchableOpacity>
       </View>
-      
+
+      {/* bottom info */}
       <View style={overlayStyles.bottomInfo}>
         <TouchableOpacity style={overlayStyles.influencerRow} onPress={onInfluencer}>
           <Text style={overlayStyles.avatar}>{video.influencer.avatar}</Text>
@@ -210,11 +298,11 @@ function VideoOverlay({ video, isLiked, isSaved, likesCount, commentsCount, onLi
             {video.influencer.verified && ' ✓'}
           </Text>
         </TouchableOpacity>
-        
+
         <Text style={overlayStyles.title}>{video.title}</Text>
         <Text style={overlayStyles.days}>🗓️ {video.days} ימים</Text>
         <Text style={overlayStyles.location}>📍 {video.location}</Text>
-        
+
         <View style={overlayStyles.buttons}>
           <TouchableOpacity style={overlayStyles.detailsBtn} onPress={onDetails}>
             <Text style={overlayStyles.detailsBtnText}>פרטים</Text>

@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useEffect } from 'react';
-import { FlatList, useWindowDimensions } from 'react-native';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { FlatList, useWindowDimensions, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import VideoItem from './VideoItem';
 
 type VideoFeedProps = {
@@ -91,7 +91,7 @@ export const MOCK_DATA: VideoData[] = [
     },
     {
       id: '4', 
-      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', 
+      uri: 'https://res.cloudinary.com/dmxzi7dvx/video/upload/v1755583223/zwbbwckjrgjcrih4iuxj.mp4', 
       category: 'Trips',
       influencer: { id: 'yonatan', name: 'יונתן רוט', avatar: '👨', verified: true },
       title: 'טיול בהרי האלפים 🏔️',
@@ -118,28 +118,46 @@ export const MOCK_DATA: VideoData[] = [
 
 export default function VideoFeed({ filter = 'All', initialVideoId }: VideoFeedProps) {
   const { height } = useWindowDimensions();
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlatList<VideoData>>(null);
+
+  // 🔑 Track which video index is currently active (visible page)
+  const [activeIndex, setActiveIndex] = useState(0);
+
   const filteredData = useMemo(
-    () => filter === 'All' ? MOCK_DATA : MOCK_DATA.filter((item) => item.category === filter),
+    () => (filter === 'All' ? MOCK_DATA : MOCK_DATA.filter((item) => item.category === filter)),
     [filter]
   );
 
   useEffect(() => {
     if (initialVideoId && flatListRef.current) {
-      const index = MOCK_DATA.findIndex(item => item.id === initialVideoId);
+      const index = MOCK_DATA.findIndex((item) => item.id === initialVideoId);
       if (index !== -1) {
         setTimeout(() => {
           flatListRef.current?.scrollToIndex({ index, animated: false });
+          // make sure the correct video is marked active as well
+          setActiveIndex(index);
         }, 300);
       }
     }
   }, [initialVideoId]);
 
+  // 🔑 When scroll finishes, compute which "page" we’re on
+  const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset } = event.nativeEvent;
+    const pageIndex = Math.round(contentOffset.y / height);
+    setActiveIndex(pageIndex);
+  };
+
   return (
     <FlatList
       ref={flatListRef}
       data={filteredData}
-      renderItem={({ item }) => <VideoItem video={item} />}
+      renderItem={({ item, index }) => (
+        <VideoItem
+          video={item}
+          isActive={index === activeIndex}  // <-- new prop
+        />
+      )}
       pagingEnabled
       snapToInterval={height}
       snapToAlignment="start"
@@ -151,6 +169,7 @@ export default function VideoFeed({ filter = 'All', initialVideoId }: VideoFeedP
         offset: height * index,
         index,
       })}
+      onMomentumScrollEnd={handleMomentumScrollEnd} // <-- new
     />
   );
 }
