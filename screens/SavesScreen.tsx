@@ -21,7 +21,7 @@ export default function SavesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>סרטונים שמורים</Text>
+        <Text style={styles.title}>שמורים</Text>
         <Text style={styles.count}>{savedVideos.length} סרטונים</Text>
       </View>
       

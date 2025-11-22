@@ -8,6 +8,10 @@ import LoginScreen from '../screens/LoginScreen';
 import HomeFeedScreen from '../screens/HomeFeedScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import InfluencerScreen from '../screens/InfluencerScreen';
+import SavesScreen from '../screens/SavesScreen';
+import LikedScreen from '../screens/LikedScreen';
+import OrdersScreen from '../screens/OrdersScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 // If you’ll later add Orders, Saves, AddVideo screens:
 import OrdersScreen from '../screens/OrdersScreen';
@@ -18,6 +22,10 @@ export type RootStackParamList = {
   Login: undefined;
   MainTabs: undefined;
   Influencer: { influencerId: string };
+  Saves: undefined;
+  Liked: undefined;
+  Orders: undefined;
+  Settings: undefined;
 };
 
 type MainTabsParamList = {
@@ -73,6 +81,10 @@ export default function RootNavigator() {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="Influencer" component={InfluencerScreen} />
+      <Stack.Screen name="Saves" component={SavesScreen} />
+      <Stack.Screen name="Liked" component={LikedScreen} />
+      <Stack.Screen name="Orders" component={OrdersScreen} />
+      <Stack.Screen name="Settings" component={SettingsScreen} />
     </Stack.Navigator>
   );
 }

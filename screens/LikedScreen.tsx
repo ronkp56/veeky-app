@@ -1,0 +1,70 @@
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import { MOCK_DATA } from '../components/VideoFeed';
+import { storage } from '../utils/storage';
+import { useFocusEffect } from '@react-navigation/native';
+
+const { width } = Dimensions.get('window');
+const itemWidth = (width - 4) / 3;
+
+export default function LikedScreen() {
+  const [likedIds, setLikedIds] = useState<string[]>([]);
+  
+  useFocusEffect(
+    useCallback(() => {
+      setLikedIds(storage.getLikedVideos());
+    }, [])
+  );
+  
+  const likedVideos = MOCK_DATA.filter(v => likedIds.includes(v.id));
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>אהבתי</Text>
+        <Text style={styles.count}>{likedVideos.length} סרטונים</Text>
+      </View>
+      
+      {likedVideos.length === 0 ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyIcon}>❤️</Text>
+          <Text style={styles.emptyText}>אין סרטונים שאהבת</Text>
+          <Text style={styles.emptySubtext}>לחץ על לייק כדי לראות כאן</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={likedVideos}
+          numColumns={3}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.videoCard}>
+              <View style={styles.thumbnail}>
+                <Text style={styles.thumbnailEmoji}>{item.influencer.avatar}</Text>
+                <Text style={styles.thumbnailCategory}>{item.category}</Text>
+              </View>
+              <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
+              <Text style={styles.videoPrice}>{item.price}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#000' },
+  header: { padding: 16, paddingTop: 60, borderBottomWidth: 1, borderBottomColor: '#222' },
+  title: { color: '#fff', fontSize: 24, fontWeight: '700' },
+  count: { color: '#888', fontSize: 14, marginTop: 4 },
+  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 },
+  emptyIcon: { fontSize: 64, marginBottom: 16 },
+  emptyText: { color: '#fff', fontSize: 18, fontWeight: '600', marginBottom: 8 },
+  emptySubtext: { color: '#888', fontSize: 14, textAlign: 'center' },
+  videoCard: { width: itemWidth, padding: 1 },
+  thumbnail: { width: '100%', aspectRatio: 9 / 16, backgroundColor: '#1a1a1a', borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
+  thumbnailEmoji: { fontSize: 40, marginBottom: 8 },
+  thumbnailCategory: { color: '#888', fontSize: 10 },
+  videoTitle: { color: '#fff', fontSize: 11, marginBottom: 2 },
+  videoPrice: { color: '#00D5FF', fontSize: 12, fontWeight: '600' },
+});

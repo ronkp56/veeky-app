@@ -6,12 +6,15 @@ type Comment = {
 };
 
 let savedVideos: Set<string> = new Set();
+let likedVideos: Set<string> = new Set();
 let videoComments: Map<string, Comment[]> = new Map();
 
 export const storage = {
   getSavedVideos: (): string[] => Array.from(savedVideos),
+  getLikedVideos: (): string[] => Array.from(likedVideos),
   
   isSaved: (videoId: string): boolean => savedVideos.has(videoId),
+  isLiked: (videoId: string): boolean => likedVideos.has(videoId),
   
   toggleSave: (videoId: string): boolean => {
     if (savedVideos.has(videoId)) {
@@ -19,6 +22,16 @@ export const storage = {
       return false;
     } else {
       savedVideos.add(videoId);
+      return true;
+    }
+  },
+  
+  toggleLike: (videoId: string): boolean => {
+    if (likedVideos.has(videoId)) {
+      likedVideos.delete(videoId);
+      return false;
+    } else {
+      likedVideos.add(videoId);
       return true;
     }
   },

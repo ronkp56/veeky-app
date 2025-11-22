@@ -22,7 +22,7 @@ export default function VideoItem({ video }: Props) {
   const videoRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(storage.isLiked(video.id));
   const [isSaved, setIsSaved] = useState(storage.isSaved(video.id));
   const [likesCount, setLikesCount] = useState(likes);
   const [commentsVisible, setCommentsVisible] = useState(false);
@@ -64,8 +64,9 @@ export default function VideoItem({ video }: Props) {
   }, [uri]);
 
   const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+    const liked = storage.toggleLike(video.id);
+    setIsLiked(liked);
+    setLikesCount(liked ? likesCount + 1 : likesCount - 1);
   };
 
   const handleSave = () => {
