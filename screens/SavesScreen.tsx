@@ -1,12 +1,22 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
 import { MOCK_DATA } from '../components/VideoFeed';
+import { storage } from '../utils/storage';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 const itemWidth = (width - 4) / 3;
 
 export default function SavesScreen() {
-  const savedVideos = MOCK_DATA.slice(0, 2);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  
+  useFocusEffect(
+    useCallback(() => {
+      setSavedIds(storage.getSavedVideos());
+    }, [])
+  );
+  
+  const savedVideos = MOCK_DATA.filter(v => savedIds.includes(v.id));
 
   return (
     <View style={styles.container}>
@@ -29,7 +39,8 @@ export default function SavesScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.videoCard}>
               <View style={styles.thumbnail}>
-                <Text style={styles.thumbnailIcon}>🎥</Text>
+                <Text style={styles.thumbnailEmoji}>{item.influencer.avatar}</Text>
+                <Text style={styles.thumbnailCategory}>{item.category}</Text>
               </View>
               <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
               <Text style={styles.videoPrice}>{item.price}</Text>
@@ -96,8 +107,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
   },
-  thumbnailIcon: {
-    fontSize: 32,
+  thumbnailEmoji: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  thumbnailCategory: {
+    color: '#888',
+    fontSize: 10,
   },
   videoTitle: {
     color: '#fff',

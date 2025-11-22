@@ -3,6 +3,8 @@ import { View, StyleSheet, Dimensions, Platform, Text, ActivityIndicator, Toucha
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { VideoData } from './VideoFeed';
+import { storage } from '../utils/storage';
+import CommentsModal from './CommentsModal';
 
 const { height, width } = Dimensions.get('window');
 
@@ -16,8 +18,10 @@ export default function VideoItem({ video }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(storage.isSaved(video.id));
   const [likesCount, setLikesCount] = useState(likes);
+  const [commentsVisible, setCommentsVisible] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(storage.getComments(video.id).length);
   
   const player = useVideoPlayer(uri, (player) => {
     player.loop = true;
@@ -58,6 +62,20 @@ export default function VideoItem({ video }: Props) {
     setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
   };
 
+  const handleSave = () => {
+    const saved = storage.toggleSave(video.id);
+    setIsSaved(saved);
+  };
+
+  const handleComments = () => {
+    setCommentsVisible(true);
+  };
+
+  const handleCloseComments = () => {
+    setCommentsVisible(false);
+    setCommentsCount(storage.getComments(video.id).length);
+  };
+
   if (Platform.OS === 'web') {
     return (
       <View style={styles.container}>
@@ -91,13 +109,15 @@ export default function VideoItem({ video }: Props) {
             isLiked={isLiked}
             isSaved={isSaved}
             likesCount={likesCount}
+            commentsCount={commentsCount}
             onLike={handleLike}
-            onSave={() => setIsSaved(!isSaved)}
-            onComment={() => console.log('Comments')}
+            onSave={handleSave}
+            onComment={handleComments}
             onShare={() => console.log('Share')}
             onBook={() => console.log('Book')}
           />
         )}
+        <CommentsModal visible={commentsVisible} videoId={video.id} onClose={handleCloseComments} />
       </View>
     );
   }
@@ -117,12 +137,14 @@ export default function VideoItem({ video }: Props) {
         isLiked={isLiked}
         isSaved={isSaved}
         likesCount={likesCount}
+        commentsCount={commentsCount}
         onLike={handleLike}
-        onSave={() => setIsSaved(!isSaved)}
-        onComment={() => console.log('Comments')}
+        onSave={handleSave}
+        onComment={handleComments}
         onShare={() => console.log('Share')}
         onBook={() => console.log('Book')}
       />
+      <CommentsModal visible={commentsVisible} videoId={video.id} onClose={handleCloseComments} />
     </View>
   );
 }
@@ -132,6 +154,7 @@ type OverlayProps = {
   isLiked: boolean;
   isSaved: boolean;
   likesCount: number;
+  commentsCount: number;
   onLike: () => void;
   onSave: () => void;
   onComment: () => void;
@@ -139,7 +162,7 @@ type OverlayProps = {
   onBook: () => void;
 };
 
-function VideoOverlay({ video, isLiked, isSaved, likesCount, onLike, onSave, onComment, onShare, onBook }: OverlayProps) {
+function VideoOverlay({ video, isLiked, isSaved, likesCount, commentsCount, onLike, onSave, onComment, onShare, onBook }: OverlayProps) {
   return (
     <View style={overlayStyles.container}>
       <View style={overlayStyles.rightActions}>
@@ -150,7 +173,7 @@ function VideoOverlay({ video, isLiked, isSaved, likesCount, onLike, onSave, onC
         
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onComment}>
           <Ionicons name="chatbubble-outline" size={30} color="#fff" />
-          <Text style={overlayStyles.actionText}>{formatCount(video.comments)}</Text>
+          <Text style={overlayStyles.actionText}>{formatCount(commentsCount)}</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onSave}>

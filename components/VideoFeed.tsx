@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import { Dimensions } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { Dimensions, FlatList } from 'react-native';
 import VideoItem from './VideoItem';
 
 type VideoFeedProps = {
@@ -82,16 +81,20 @@ export default function VideoFeed({ filter = 'All' }: VideoFeedProps) {
   );
 
   return (
-    <FlashList
+    <FlatList
       data={filteredData}
       renderItem={({ item }) => <VideoItem video={item} />}
-      estimatedItemSize={Dimensions.get('window').height}
       pagingEnabled
       snapToInterval={Dimensions.get('window').height}
       snapToAlignment="start"
       decelerationRate="fast"
       showsVerticalScrollIndicator={false}
       keyExtractor={(item) => item.id}
+      getItemLayout={(_, index) => ({
+        length: Dimensions.get('window').height,
+        offset: Dimensions.get('window').height * index,
+        index,
+      })}
     />
   );
 }
