@@ -24,12 +24,12 @@ type ProfileStackParamList = {
 
 export type RootStackParamList = {
   Login: undefined;
-  MainTabs: undefined;
+  MainTabs: { videoId?: string } | undefined;
   Influencer: { influencerId: string };
 };
 
 type MainTabsParamList = {
-  Home: undefined;
+  Home: { videoId?: string } | undefined;
   AddVideo: undefined;
   Profile: undefined;
 };

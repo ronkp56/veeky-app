@@ -7,11 +7,12 @@ import VideoFeed from '../components/VideoFeed';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MainTabs'>;
 
-export default function HomeFeedScreen({ navigation: _navigation }: Props) {
+export default function HomeFeedScreen({ navigation: _navigation, route }: Props) {
   // ✅ underscore silences unused var
   const [selectedFilter, setSelectedFilter] = useState<
     'All' | 'Trips' | 'Lodging' | 'Entertainment'
   >('All');
+  const videoId = route?.params?.videoId;
 
   const filters = [
     { key: 'search', icon: 'search-outline', label: '' },
@@ -56,7 +57,7 @@ export default function HomeFeedScreen({ navigation: _navigation }: Props) {
         ))}
       </View>
 
-      <VideoFeed filter={selectedFilter} />
+      <VideoFeed filter={selectedFilter} initialVideoId={videoId} />
     </View>
   );
 }

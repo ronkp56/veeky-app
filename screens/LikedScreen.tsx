@@ -5,12 +5,15 @@ import { useNavigation } from '@react-navigation/native';
 import { MOCK_DATA } from '../components/VideoFeed';
 import { storage } from '../utils/storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { getThumbnailForLocation } from '../utils/thumbnails';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/RootNavigator';
 
 const { width } = Dimensions.get('window');
 const itemWidth = (width - 4) / 3;
 
 export default function LikedScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [likedIds, setLikedIds] = useState<string[]>([]);
   
   useFocusEffect(
@@ -45,9 +48,12 @@ export default function LikedScreen() {
           numColumns={3}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.videoCard}>
+            <TouchableOpacity 
+              style={styles.videoCard}
+              onPress={() => navigation.navigate('MainTabs', { videoId: item.id })}
+            >
               <View style={styles.thumbnail}>
-                <Text style={styles.thumbnailEmoji}>{item.influencer.avatar}</Text>
+                <Text style={styles.thumbnailEmoji}>{getThumbnailForLocation(item.location)}</Text>
                 <Text style={styles.thumbnailCategory}>{item.category}</Text>
               </View>
               <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>

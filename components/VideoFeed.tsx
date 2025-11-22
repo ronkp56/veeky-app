@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { FlatList, useWindowDimensions } from 'react-native';
 import VideoItem from './VideoItem';
 
 type VideoFeedProps = {
   filter?: 'All' | 'Trips' | 'Lodging' | 'Entertainment';
+  initialVideoId?: string;
 };
 
 export type VideoData = {
@@ -115,15 +116,28 @@ export const MOCK_DATA: VideoData[] = [
     },
   ];
 
-export default function VideoFeed({ filter = 'All' }: VideoFeedProps) {
+export default function VideoFeed({ filter = 'All', initialVideoId }: VideoFeedProps) {
   const { height } = useWindowDimensions();
+  const flatListRef = useRef<FlatList>(null);
   const filteredData = useMemo(
     () => filter === 'All' ? MOCK_DATA : MOCK_DATA.filter((item) => item.category === filter),
     [filter]
   );
 
+  useEffect(() => {
+    if (initialVideoId && flatListRef.current) {
+      const index = filteredData.findIndex(item => item.id === initialVideoId);
+      if (index !== -1) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToIndex({ index, animated: false });
+        }, 100);
+      }
+    }
+  }, [initialVideoId, filteredData]);
+
   return (
     <FlatList
+      ref={flatListRef}
       data={filteredData}
       renderItem={({ item }) => <VideoItem video={item} />}
       pagingEnabled

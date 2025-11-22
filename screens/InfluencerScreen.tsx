@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from '
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { MOCK_DATA } from '../components/VideoFeed';
+import { getThumbnailForLocation } from '../utils/thumbnails';
 
 const { width } = Dimensions.get('window');
 const itemWidth = (width - 4) / 3;
@@ -36,10 +37,10 @@ export default function InfluencerScreen({ route, navigation }: Props) {
         renderItem={({ item }) => (
           <TouchableOpacity 
             style={styles.videoCard}
-            onPress={() => navigation.navigate('MainTabs')}
+            onPress={() => navigation.navigate('MainTabs', { videoId: item.id })}
           >
             <View style={styles.thumbnail}>
-              <Text style={styles.thumbnailEmoji}>{item.influencer.avatar}</Text>
+              <Text style={styles.thumbnailEmoji}>{getThumbnailForLocation(item.location)}</Text>
               <Text style={styles.thumbnailCategory}>{item.category}</Text>
             </View>
             <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
