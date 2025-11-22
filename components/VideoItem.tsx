@@ -6,7 +6,6 @@ import { VideoData } from './VideoFeed';
 import { storage } from '../utils/storage';
 import CommentsModal from './CommentsModal';
 import ItineraryModal from './ItineraryModal';
-import ItineraryModal from './ItineraryModal';
 
 const { height, width } = Dimensions.get('window');
 
@@ -24,7 +23,6 @@ export default function VideoItem({ video }: Props) {
   const [likesCount, setLikesCount] = useState(likes);
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [commentsCount, setCommentsCount] = useState(storage.getComments(video.id).length);
-  const [itineraryVisible, setItineraryVisible] = useState(false);
   const [itineraryVisible, setItineraryVisible] = useState(false);
   
   const player = useVideoPlayer(uri, (player) => {
