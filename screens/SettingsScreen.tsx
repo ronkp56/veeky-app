@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
 
 export default function SettingsScreen() {
   const navigation = useNavigation();
-  const [darkMode, setDarkMode] = useState(true);
+  const { isDarkMode, toggleTheme } = useTheme();
+  const darkMode = isDarkMode;
 
   return (
     <View style={[styles.container, { backgroundColor: darkMode ? '#000' : '#fff' }]}>
@@ -21,7 +23,7 @@ export default function SettingsScreen() {
           <Text style={[styles.settingLabel, { color: darkMode ? '#fff' : '#000' }]}>תצוגה כהה</Text>
           <Switch
             value={darkMode}
-            onValueChange={setDarkMode}
+            onValueChange={toggleTheme}
             trackColor={{ false: '#767577', true: '#00D5FF' }}
             thumbColor={darkMode ? '#fff' : '#f4f3f4'}
           />
