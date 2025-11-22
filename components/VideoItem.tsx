@@ -101,7 +101,7 @@ export default function VideoItem({ video }: Props) {
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
+            objectFit: 'contain',
             display: loading || error ? 'none' : 'block',
           }}
           loop
@@ -300,7 +300,7 @@ const overlayStyles = StyleSheet.create({
   },
   bottomInfo: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 140,
     left: 12,
     right: 80,
   },

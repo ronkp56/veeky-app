@@ -29,7 +29,7 @@ export type VideoData = {
 export const MOCK_DATA: VideoData[] = [
     {
       id: '1',
-      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
       category: 'Trips',
       influencer: { id: 'yonatan', name: 'יונתן רוט', avatar: '👨', verified: true },
       title: 'חופשה מדהימה ביוון 🇬🇷',
@@ -51,7 +51,7 @@ export const MOCK_DATA: VideoData[] = [
     },
     {
       id: '2', 
-      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', 
+      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4', 
       category: 'Lodging',
       influencer: { id: 'amitai', name: 'אמיתי חצאל', avatar: '👨', verified: true },
       title: 'מלון יוקרה בדובאי ✨',
@@ -71,7 +71,7 @@ export const MOCK_DATA: VideoData[] = [
     },
     {
       id: '3', 
-      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', 
+      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', 
       category: 'Entertainment',
       influencer: { id: 'amir', name: 'אמיר אבניאל', avatar: '👩', verified: true },
       title: 'פארק שעשועים בברצלונה 🎢',
@@ -90,7 +90,7 @@ export const MOCK_DATA: VideoData[] = [
     },
     {
       id: '4', 
-      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4', 
+      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', 
       category: 'Trips',
       influencer: { id: 'yonatan', name: 'יונתן רוט', avatar: '👨', verified: true },
       title: 'טיול בהרי האלפים 🏔️',
