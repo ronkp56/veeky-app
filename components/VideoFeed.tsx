@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Dimensions } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import VideoItem from './VideoItem';
@@ -13,8 +13,7 @@ type VideoData = {
   category: 'Trips' | 'Lodging' | 'Entertainment';
 };
 
-export default function VideoFeed({ filter = 'All' }: VideoFeedProps) {
-  const data: VideoData[] = [
+const MOCK_DATA: VideoData[] = [
     {
       id: '1',
       uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
@@ -37,7 +36,11 @@ export default function VideoFeed({ filter = 'All' }: VideoFeedProps) {
     },
   ];
 
-  const filteredData = filter === 'All' ? data : data.filter((item) => item.category === filter);
+export default function VideoFeed({ filter = 'All' }: VideoFeedProps) {
+  const filteredData = useMemo(
+    () => filter === 'All' ? MOCK_DATA : MOCK_DATA.filter((item) => item.category === filter),
+    [filter]
+  );
 
   return (
     <FlashList

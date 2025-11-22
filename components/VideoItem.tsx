@@ -9,14 +9,14 @@ type Props = {
 };
 
 export default function VideoItem({ uri }: Props) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   
-  const player = Platform.OS !== 'web' ? useVideoPlayer(uri, (player) => {
+  const player = useVideoPlayer(uri, (player) => {
     player.loop = true;
     player.play();
-  }) : null;
+  });
 
   useEffect(() => {
     if (Platform.OS === 'web' && videoRef.current) {
@@ -78,8 +78,6 @@ export default function VideoItem({ uri }: Props) {
     );
   }
 
-  if (!player) return null;
-  
   return (
     <View style={styles.container}>
       <VideoView

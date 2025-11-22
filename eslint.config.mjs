@@ -7,7 +7,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   // 1) Ignore paths (replaces .eslintignore)
-  { ignores: ['node_modules', '.expo', 'dist', 'build', 'android', 'ios'] },
+  { ignores: ['**/node_modules/**', '**/.expo/**', '**/dist/**', '**/build/**', '**/android/**', '**/ios/**'] },
 
   // 2) Treat config files as Node env (allows `module`, `require`, etc.)
   {

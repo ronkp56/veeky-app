@@ -42,8 +42,7 @@ function MainTabs() {
         tabBarInactiveTintColor: '#888',
         tabBarIcon: ({ color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
-          if (route.name === 'Home') iconName = 'home-outline';
-          else if (route.name === 'Orders') iconName = 'receipt-outline';
+          if (route.name === 'Orders') iconName = 'receipt-outline';
           else if (route.name === 'AddVideo') iconName = 'add-circle-outline';
           else if (route.name === 'Saves') iconName = 'bookmark-outline';
           else if (route.name === 'Profile') iconName = 'person-outline';
@@ -53,7 +52,7 @@ function MainTabs() {
       // ✅ Add this listener
       screenListeners={{
         tabPress: () => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
         },
       }}
     >

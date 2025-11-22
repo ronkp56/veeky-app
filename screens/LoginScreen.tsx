@@ -44,7 +44,7 @@ export default function LoginScreen({ navigation }: Props) {
       await wait(900); // simulate network
       // TODO: store tokens securely (expo-secure-store) and hydrate user state
       navigation.replace('MainTabs');
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Login failed:', e);
       setError('כניסה נכשלה. נסו שוב.');
     } finally {
@@ -59,7 +59,7 @@ export default function LoginScreen({ navigation }: Props) {
       // TODO: integrate OAuth (e.g., expo-auth-session / backend)
       await wait(600);
       navigation.replace('MainTabs');
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('Google login failed:', e);
       setError('התחברות עם Google נכשלה.');
     } finally {
@@ -162,7 +162,7 @@ export default function LoginScreen({ navigation }: Props) {
               accessibilityRole="button"
               accessibilityLabel="התחברות"
             >
-              {loading ? <ActivityIndicator /> : <Text style={[styles.primaryText, { color: c.primaryText }]}>התחברות</Text>}
+              {loading ? <ActivityIndicator color={c.primaryText} /> : <Text style={[styles.primaryText, { color: c.primaryText }]}>התחברות</Text>}
             </TouchableOpacity>
 
             <TouchableOpacity
