@@ -1,14 +1,20 @@
 import React from 'react';
+import { Dimensions } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import VideoItem from './VideoItem';
 
-// ✅ Add prop type
 type VideoFeedProps = {
   filter?: 'All' | 'Trips' | 'Lodging' | 'Entertainment';
 };
 
+type VideoData = {
+  id: string;
+  uri: string;
+  category: 'Trips' | 'Lodging' | 'Entertainment';
+};
+
 export default function VideoFeed({ filter = 'All' }: VideoFeedProps) {
-  const data = [
+  const data: VideoData[] = [
     {
       id: '1',
       uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
@@ -31,13 +37,13 @@ export default function VideoFeed({ filter = 'All' }: VideoFeedProps) {
     },
   ];
 
-  // ✅ Optional filtering logic (keeps it future-ready)
   const filteredData = filter === 'All' ? data : data.filter((item) => item.category === filter);
 
   return (
     <FlashList
       data={filteredData}
       renderItem={({ item }) => <VideoItem uri={item.uri} />}
+      estimatedItemSize={Dimensions.get('window').height}
       pagingEnabled
       showsVerticalScrollIndicator={false}
       keyExtractor={(item) => item.id}

@@ -28,9 +28,9 @@ export default function LoginScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const emailValid = /.+@.+\..+/.test(email.trim());
-  const passwordValid = password.length >= 8;
-  const formValid = emailValid && passwordValid;
+  const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()), [email]);
+  const passwordValid = useMemo(() => password.length >= 8, [password]);
+  const formValid = useMemo(() => emailValid && passwordValid, [emailValid, passwordValid]);
 
   const handleLogin = async () => {
     setError(null);
@@ -44,7 +44,8 @@ export default function LoginScreen({ navigation }: Props) {
       await wait(900); // simulate network
       // TODO: store tokens securely (expo-secure-store) and hydrate user state
       navigation.replace('MainTabs');
-    } catch (_e) {
+    } catch (e) {
+      console.error('Login failed:', e);
       setError('כניסה נכשלה. נסו שוב.');
     } finally {
       setLoading(false);
@@ -52,12 +53,14 @@ export default function LoginScreen({ navigation }: Props) {
   };
 
   const handleGoogleLogin = async () => {
+    setError(null);
     setLoading(true);
     try {
       // TODO: integrate OAuth (e.g., expo-auth-session / backend)
       await wait(600);
       navigation.replace('MainTabs');
-    } catch {
+    } catch (e) {
+      console.error('Google login failed:', e);
       setError('התחברות עם Google נכשלה.');
     } finally {
       setLoading(false);
@@ -159,7 +162,7 @@ export default function LoginScreen({ navigation }: Props) {
               accessibilityRole="button"
               accessibilityLabel="התחברות"
             >
-              {loading ? <ActivityIndicator /> : <Text style={styles.primaryText}>התחברות</Text>}
+              {loading ? <ActivityIndicator /> : <Text style={[styles.primaryText, { color: c.primaryText }]}>התחברות</Text>}
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -230,7 +233,7 @@ export default function LoginScreen({ navigation }: Props) {
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function getTheme(dark: boolean) {
-  const primary = '#00D5FF'; // Veeky accent
+  const primary = '#00D5FF';
   return dark
     ? {
         bg: '#0B0B0C',
@@ -243,6 +246,7 @@ function getTheme(dark: boolean) {
         inputBorder: '#2A2B31',
         chipBg: '#18191B',
         primary,
+        primaryText: '#0B0B0C',
         link: primary,
         disabled: '#2E2F36',
         danger: '#FF6B6B',
@@ -258,6 +262,7 @@ function getTheme(dark: boolean) {
         inputBorder: '#E5E7EB',
         chipBg: '#F3F4F6',
         primary,
+        primaryText: '#0B0B0C',
         link: '#007EA0',
         disabled: '#D1D5DB',
         danger: '#DC2626',
@@ -308,7 +313,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 4,
   },
-  primaryText: { color: '#0B0B0C', fontWeight: '700', fontSize: 16 },
+  primaryText: { fontWeight: '700', fontSize: 16 },
 
   linkRow: { alignItems: 'center', marginTop: 2 },
   link: { fontWeight: '700', fontSize: 14 },

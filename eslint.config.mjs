@@ -36,6 +36,7 @@ export default tseslint.config(
 
   // 6) React Hooks rules
   {
+    files: ['**/*.{tsx,jsx}'],
     plugins: { 'react-hooks': reactHooks },
     rules: {
       'react-hooks/rules-of-hooks': 'error',

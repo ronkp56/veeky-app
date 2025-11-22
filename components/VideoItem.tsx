@@ -9,31 +9,41 @@ type Props = {
 };
 
 export default function VideoItem({ uri }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   
-  // For native platforms, use expo-video
-  const player = useVideoPlayer(uri, (player) => {
+  const player = Platform.OS !== 'web' ? useVideoPlayer(uri, (player) => {
     player.loop = true;
     player.play();
-  });
+  }) : null;
 
   useEffect(() => {
-    // For web, use HTML5 video
     if (Platform.OS === 'web' && videoRef.current) {
       const video = videoRef.current;
       video.loop = true;
-      video.muted = true; // Required for autoplay
+      video.muted = true;
       
-      video.onloadstart = () => setLoading(true);
-      video.oncanplay = () => setLoading(false);
-      video.onerror = () => {
+      const handleLoadStart = () => setLoading(true);
+      const handleCanPlay = () => setLoading(false);
+      const handleError = () => {
         setError(true);
         setLoading(false);
       };
       
+      video.onloadstart = handleLoadStart;
+      video.oncanplay = handleCanPlay;
+      video.onerror = handleError;
+      
       video.play().catch(() => setError(true));
+      
+      return () => {
+        if (video) {
+          video.onloadstart = null;
+          video.oncanplay = null;
+          video.onerror = null;
+        }
+      };
     }
   }, [uri]);
 
@@ -68,6 +78,8 @@ export default function VideoItem({ uri }: Props) {
     );
   }
 
+  if (!player) return null;
+  
   return (
     <View style={styles.container}>
       <VideoView

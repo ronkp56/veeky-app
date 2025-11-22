@@ -18,13 +18,20 @@ export type RootStackParamList = {
   MainTabs: undefined;
 };
 
-const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+type MainTabsParamList = {
+  Home: undefined;
+  Orders: undefined;
+  AddVideo: undefined;
+  Saves: undefined;
+  Profile: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+const Tab = createBottomTabNavigator<MainTabsParamList>();
 
 function MainTabs() {
   return (
     <Tab.Navigator
-      id={undefined}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
@@ -61,7 +68,7 @@ function MainTabs() {
 
 export default function RootNavigator() {
   return (
-    <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="MainTabs" component={MainTabs} />
     </Stack.Navigator>
