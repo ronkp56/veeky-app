@@ -1,9 +1,112 @@
-// SavesScreen.tsx
-import { View, Text } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
+import { MOCK_DATA } from '../components/VideoFeed';
+
+const { width } = Dimensions.get('window');
+const itemWidth = (width - 4) / 3;
+
 export default function SavesScreen() {
+  const savedVideos = MOCK_DATA.slice(0, 2);
+
   return (
-    <View>
-      <Text>Saves Screen</Text>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>סרטונים שמורים</Text>
+        <Text style={styles.count}>{savedVideos.length} סרטונים</Text>
+      </View>
+      
+      {savedVideos.length === 0 ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyIcon}>🔖</Text>
+          <Text style={styles.emptyText}>אין סרטונים שמורים</Text>
+          <Text style={styles.emptySubtext}>שמור חופשות שאהבת כדי לראות אותן כאן</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={savedVideos}
+          numColumns={3}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.videoCard}>
+              <View style={styles.thumbnail}>
+                <Text style={styles.thumbnailIcon}>🎥</Text>
+              </View>
+              <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
+              <Text style={styles.videoPrice}>{item.price}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  header: {
+    padding: 16,
+    paddingTop: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: '#222',
+  },
+  title: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  count: {
+    color: '#888',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  empty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    color: '#888',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  videoCard: {
+    width: itemWidth,
+    padding: 1,
+  },
+  thumbnail: {
+    width: '100%',
+    aspectRatio: 9 / 16,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  thumbnailIcon: {
+    fontSize: 32,
+  },
+  videoTitle: {
+    color: '#fff',
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  videoPrice: {
+    color: '#00D5FF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+});
