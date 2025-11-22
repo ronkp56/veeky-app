@@ -101,7 +101,7 @@ export default function VideoItem({ video }: Props) {
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'contain',
+            objectFit: 'cover',
             display: loading || error ? 'none' : 'block',
           }}
           loop
