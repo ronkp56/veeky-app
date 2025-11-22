@@ -2,6 +2,9 @@ import React, { useRef, useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions, Platform, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/RootNavigator';
 import { VideoData } from './VideoFeed';
 import { storage } from '../utils/storage';
 import CommentsModal from './CommentsModal';
@@ -14,6 +17,7 @@ type Props = {
 };
 
 export default function VideoItem({ video }: Props) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { uri, influencer, title, location, price, likes, comments, shares } = video;
   const videoRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
@@ -118,6 +122,7 @@ export default function VideoItem({ video }: Props) {
             onShare={() => console.log('Share')}
             onBook={() => console.log('Book')}
             onDetails={() => setItineraryVisible(true)}
+            onInfluencer={() => navigation.navigate('Influencer', { influencerId: video.influencer.id })}
           />
         )}
         <CommentsModal visible={commentsVisible} videoId={video.id} onClose={handleCloseComments} />
@@ -148,6 +153,7 @@ export default function VideoItem({ video }: Props) {
         onShare={() => console.log('Share')}
         onBook={() => console.log('Book')}
         onDetails={() => setItineraryVisible(true)}
+        onInfluencer={() => navigation.navigate('Influencer', { influencerId: video.influencer.id })}
       />
       <CommentsModal visible={commentsVisible} videoId={video.id} onClose={handleCloseComments} />
       <ItineraryModal visible={itineraryVisible} video={video} onClose={() => setItineraryVisible(false)} />
@@ -167,9 +173,10 @@ type OverlayProps = {
   onShare: () => void;
   onBook: () => void;
   onDetails: () => void;
+  onInfluencer: () => void;
 };
 
-function VideoOverlay({ video, isLiked, isSaved, likesCount, commentsCount, onLike, onSave, onComment, onShare, onBook, onDetails }: OverlayProps) {
+function VideoOverlay({ video, isLiked, isSaved, likesCount, commentsCount, onLike, onSave, onComment, onShare, onBook, onDetails, onInfluencer }: OverlayProps) {
   return (
     <View style={overlayStyles.container}>
       <View style={overlayStyles.rightActions}>
@@ -195,13 +202,13 @@ function VideoOverlay({ video, isLiked, isSaved, likesCount, commentsCount, onLi
       </View>
       
       <View style={overlayStyles.bottomInfo}>
-        <View style={overlayStyles.influencerRow}>
+        <TouchableOpacity style={overlayStyles.influencerRow} onPress={onInfluencer}>
           <Text style={overlayStyles.avatar}>{video.influencer.avatar}</Text>
           <Text style={overlayStyles.influencerName}>
             {video.influencer.name}
             {video.influencer.verified && ' ✓'}
           </Text>
-        </View>
+        </TouchableOpacity>
         
         <Text style={overlayStyles.title}>{video.title}</Text>
         <Text style={overlayStyles.days}>🗓️ {video.days} ימים</Text>

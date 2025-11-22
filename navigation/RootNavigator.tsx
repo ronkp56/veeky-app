@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import LoginScreen from '../screens/LoginScreen';
 import HomeFeedScreen from '../screens/HomeFeedScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import InfluencerScreen from '../screens/InfluencerScreen';
 
 // If you’ll later add Orders, Saves, AddVideo screens:
 import OrdersScreen from '../screens/OrdersScreen';
@@ -16,6 +17,7 @@ import AddVideoScreen from '../screens/AddVideoScreen';
 export type RootStackParamList = {
   Login: undefined;
   MainTabs: undefined;
+  Influencer: { influencerId: string };
 };
 
 type MainTabsParamList = {
@@ -70,6 +72,7 @@ export default function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen name="Influencer" component={InfluencerScreen} />
     </Stack.Navigator>
   );
 }
