@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { MOCK_DATA } from '../components/VideoFeed';
 import { getThumbnailForLocation } from '../utils/thumbnails';
+import { CommonActions } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 const itemWidth = (width - 4) / 3;
@@ -37,7 +38,14 @@ export default function InfluencerScreen({ route, navigation }: Props) {
         renderItem={({ item }) => (
           <TouchableOpacity 
             style={styles.videoCard}
-            onPress={() => navigation.navigate('MainTabs', { videoId: item.id })}
+            onPress={() => {
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: 'MainTabs', params: { screen: 'Home', params: { videoId: item.id } } }],
+                })
+              );
+            }}
           >
             <View style={styles.thumbnail}>
               <Text style={styles.thumbnailEmoji}>{getThumbnailForLocation(item.location)}</Text>

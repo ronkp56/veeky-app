@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/RootNavigator';
 import VideoFeed from '../components/VideoFeed';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'MainTabs'>;
-
-export default function HomeFeedScreen({ navigation: _navigation, route }: Props) {
-  // ✅ underscore silences unused var
+export default function HomeFeedScreen({ route }: any) {
   const [selectedFilter, setSelectedFilter] = useState<
     'All' | 'Trips' | 'Lodging' | 'Entertainment'
   >('All');

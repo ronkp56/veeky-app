@@ -1,19 +1,17 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { MOCK_DATA } from '../components/VideoFeed';
 import { storage } from '../utils/storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { getThumbnailForLocation } from '../utils/thumbnails';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/RootNavigator';
 
 const { width } = Dimensions.get('window');
 const itemWidth = (width - 4) / 3;
 
 export default function SavesScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation();
   const [savedIds, setSavedIds] = useState<string[]>([]);
   
   useFocusEffect(
@@ -50,7 +48,14 @@ export default function SavesScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity 
               style={styles.videoCard}
-              onPress={() => navigation.navigate('MainTabs', { videoId: item.id })}
+              onPress={() => {
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'MainTabs', params: { screen: 'Home', params: { videoId: item.id } } }],
+                  })
+                );
+              }}
             >
               <View style={styles.thumbnail}>
                 <Text style={styles.thumbnailEmoji}>{getThumbnailForLocation(item.location)}</Text>

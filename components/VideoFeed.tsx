@@ -126,14 +126,14 @@ export default function VideoFeed({ filter = 'All', initialVideoId }: VideoFeedP
 
   useEffect(() => {
     if (initialVideoId && flatListRef.current) {
-      const index = filteredData.findIndex(item => item.id === initialVideoId);
+      const index = MOCK_DATA.findIndex(item => item.id === initialVideoId);
       if (index !== -1) {
         setTimeout(() => {
           flatListRef.current?.scrollToIndex({ index, animated: false });
-        }, 100);
+        }, 300);
       }
     }
-  }, [initialVideoId, filteredData]);
+  }, [initialVideoId]);
 
   return (
     <FlatList
