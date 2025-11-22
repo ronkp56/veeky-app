@@ -39,8 +39,9 @@ export default function ItineraryModal({ visible, video, onClose }: Props) {
                 <View style={styles.activities}>
                   {day.activities.map((activity, idx) => (
                     <View key={idx} style={styles.activityRow}>
+                      {activity.time && <Text style={styles.activityTime}>{activity.time}</Text>}
                       <Ionicons name="checkmark-circle" size={20} color="#00D5FF" />
-                      <Text style={styles.activityText}>{activity}</Text>
+                      <Text style={styles.activityText}>{activity.activity}</Text>
                     </View>
                   ))}
                 </View>
@@ -75,6 +76,7 @@ const styles = StyleSheet.create({
   freeTag: { color: '#FFD700', fontSize: 12, fontWeight: '600' },
   activities: { gap: 8 },
   activityRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  activityTime: { color: '#00D5FF', fontSize: 13, fontWeight: '600', minWidth: 50 },
   activityText: { color: '#fff', fontSize: 14, flex: 1 },
   footer: { padding: 16, borderTopWidth: 1, borderTopColor: '#222' },
   bookBtn: { backgroundColor: '#00D5FF', paddingVertical: 16, borderRadius: 12, alignItems: 'center' },

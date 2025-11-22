@@ -219,7 +219,7 @@ function VideoOverlay({ video, isLiked, isSaved, likesCount, commentsCount, onLi
             <Text style={overlayStyles.detailsBtnText}>פרטים</Text>
           </TouchableOpacity>
           <TouchableOpacity style={overlayStyles.bookBtn} onPress={onBook}>
-            <Text style={overlayStyles.bookBtnText}>הזמן • {video.price}</Text>
+            <Text style={overlayStyles.bookBtnText}>הזמנה מהירה</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -300,7 +300,7 @@ const overlayStyles = StyleSheet.create({
   },
   bottomInfo: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 100,
     left: 12,
     right: 80,
   },
@@ -352,11 +352,12 @@ const overlayStyles = StyleSheet.create({
   },
   detailsBtn: {
     backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
+    paddingVertical: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#fff',
+    flex: 1,
+    alignItems: 'center',
   },
   detailsBtnText: {
     color: '#fff',
@@ -365,10 +366,10 @@ const overlayStyles = StyleSheet.create({
   },
   bookBtn: {
     backgroundColor: '#00D5FF',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
+    paddingVertical: 14,
+    borderRadius: 12,
     flex: 1,
+    alignItems: 'center',
   },
   bookBtnText: {
     color: '#000',

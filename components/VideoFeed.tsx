@@ -20,7 +20,7 @@ export type VideoData = {
   location: string;
   price: string;
   days: number;
-  itinerary: { day: number; activities: string[]; isFree?: boolean }[];
+  itinerary: { day: number; activities: { time: string; activity: string }[]; isFree?: boolean }[];
   likes: number;
   comments: number;
   shares: number;
@@ -37,13 +37,13 @@ export const MOCK_DATA: VideoData[] = [
       price: '₪3,500',
       days: 7,
       itinerary: [
-        { day: 1, activities: ['טיסה לסנטוריני', 'צ׳ק-אין במלון', 'סיור בעיר פירה'] },
-        { day: 2, activities: ['שייט לוולקן', 'מעיינות חמים', 'שקיעה באויה'] },
-        { day: 3, activities: ['חוף קמארי', 'טעימות יין', 'ארוחת ערב רומנטית'] },
-        { day: 4, isFree: true, activities: ['יום חופשי'] },
-        { day: 5, activities: ['סיור באקרוטירי', 'חוף אדום', 'קניות'] },
-        { day: 6, activities: ['שייט לאיים הסמוכים', 'צלילה'] },
-        { day: 7, activities: ['ארוחת בוקר אחרונה', 'טיסה חזרה'] },
+        { day: 1, activities: [{ time: '11:00', activity: 'טיסה לסנטוריני' }, { time: '14:00', activity: 'צ׳ק-אין במלון' }, { time: '17:00', activity: 'סיור בעיר פירה' }] },
+        { day: 2, activities: [{ time: '09:00', activity: 'שייט לוולקן' }, { time: '13:00', activity: 'מעיינות חמים' }, { time: '19:00', activity: 'שקיעה באויה' }] },
+        { day: 3, activities: [{ time: '10:00', activity: 'חוף קמארי' }, { time: '15:00', activity: 'טעימות יין' }, { time: '20:00', activity: 'ארוחת ערב רומנטית' }] },
+        { day: 4, isFree: true, activities: [{ time: '', activity: 'יום חופשי' }] },
+        { day: 5, activities: [{ time: '09:00', activity: 'סיור באקרוטירי' }, { time: '14:00', activity: 'חוף אדום' }, { time: '18:00', activity: 'קניות' }] },
+        { day: 6, activities: [{ time: '08:00', activity: 'שייט לאיים הסמוכים' }, { time: '13:00', activity: 'צלילה' }] },
+        { day: 7, activities: [{ time: '10:00', activity: 'ארוחת בוקר אחרונה' }, { time: '15:00', activity: 'טיסה חזרה' }] },
       ],
       likes: 12500,
       comments: 340,
@@ -59,11 +59,11 @@ export const MOCK_DATA: VideoData[] = [
       price: '₪8,900',
       days: 5,
       itinerary: [
-        { day: 1, activities: ['טיסה לדובאי', 'צ׳ק-אין במלון בורג׳ אל ערב', 'ארוחת ערב במסעדת אל מונתהא'] },
-        { day: 2, activities: ['ביקור בבורג׳ חליפה', 'קניות בדובאי מול', 'מזרקות דובאי'] },
-        { day: 3, activities: ['ספארי במדבר', 'רכיבה על גמלים', 'ארוחת ערב בדואית'] },
-        { day: 4, activities: ['יום ספא במלון', 'חוף פרטי', 'שייט ביאכטה'] },
-        { day: 5, activities: ['ארוחת בוקר מאוחרת', 'קניות אחרונות', 'טיסה חזרה'] },
+        { day: 1, activities: [{ time: '10:00', activity: 'טיסה לדובאי' }, { time: '14:00', activity: 'צ׳ק-אין במלון בורג׳ אל ערב' }, { time: '20:00', activity: 'ארוחת ערב במסעדת אל מונתהא' }] },
+        { day: 2, activities: [{ time: '09:00', activity: 'ביקור בבורג׳ חליפה' }, { time: '14:00', activity: 'קניות בדובאי מול' }, { time: '19:00', activity: 'מזרקות דובאי' }] },
+        { day: 3, activities: [{ time: '15:00', activity: 'ספארי במדבר' }, { time: '17:00', activity: 'רכיבה על גמלים' }, { time: '20:00', activity: 'ארוחת ערב בדואית' }] },
+        { day: 4, activities: [{ time: '10:00', activity: 'יום ספא במלון' }, { time: '14:00', activity: 'חוף פרטי' }, { time: '18:00', activity: 'שייט ביאכטה' }] },
+        { day: 5, activities: [{ time: '11:00', activity: 'ארוחת בוקר מאוחרת' }, { time: '13:00', activity: 'קניות אחרונות' }, { time: '16:00', activity: 'טיסה חזרה' }] },
       ],
       likes: 23400,
       comments: 567,
@@ -79,10 +79,10 @@ export const MOCK_DATA: VideoData[] = [
       price: '₪2,200',
       days: 4,
       itinerary: [
-        { day: 1, activities: ['טיסה לברצלונה', 'צ׳ק-אין', 'סיור ברמבלס'] },
-        { day: 2, activities: ['פארק גואל', 'סגרדה פמיליה', 'חוף ברצלונטה'] },
-        { day: 3, activities: ['פורט אוונטורה - פארק שעשועים', 'מופעי ערב'] },
-        { day: 4, activities: ['קניות', 'ארוחת בוקר מאוחרת', 'טיסה חזרה'] },
+        { day: 1, activities: [{ time: '12:00', activity: 'טיסה לברצלונה' }, { time: '15:00', activity: 'צ׳ק-אין' }, { time: '18:00', activity: 'סיור ברמבלס' }] },
+        { day: 2, activities: [{ time: '09:00', activity: 'פארק גואל' }, { time: '13:00', activity: 'סגרדה פמיליה' }, { time: '17:00', activity: 'חוף ברצלונטה' }] },
+        { day: 3, activities: [{ time: '10:00', activity: 'פורט אוונטורה - פארק שעשועים' }, { time: '20:00', activity: 'מופעי ערב' }] },
+        { day: 4, activities: [{ time: '10:00', activity: 'קניות' }, { time: '12:00', activity: 'ארוחת בוקר מאוחרת' }, { time: '15:00', activity: 'טיסה חזרה' }] },
       ],
       likes: 8900,
       comments: 156,
@@ -98,16 +98,16 @@ export const MOCK_DATA: VideoData[] = [
       price: '₪5,600',
       days: 10,
       itinerary: [
-        { day: 1, activities: ['טיסה לציריך', 'נסיעה לאינטרלקן', 'צ׳ק-אין'] },
-        { day: 2, activities: ['רכבל ליונגפראו', 'ארמון הקרח', 'נוף פנורמי'] },
-        { day: 3, activities: ['טיול רגלי באגם בריינץ', 'שייט באגם'] },
-        { day: 4, isFree: true, activities: ['יום חופשי'] },
-        { day: 5, activities: ['סקי בגרינדלוולד', 'שיעור סקי'] },
-        { day: 6, activities: ['ביקור בלוצרן', 'גשר הקפלה', 'אריה לוצרן'] },
-        { day: 7, isFree: true, activities: ['יום חופשי'] },
-        { day: 8, activities: ['רכבל למאטרהורן', 'צילומים'] },
-        { day: 9, activities: ['קניות שוקולד שוויצרי', 'ארוחת פונדו'] },
-        { day: 10, activities: ['ארוחת בוקר', 'נסיעה לציריך', 'טיסה חזרה'] },
+        { day: 1, activities: [{ time: '10:00', activity: 'טיסה לציריך' }, { time: '14:00', activity: 'נסיעה לאינטרלקן' }, { time: '17:00', activity: 'צ׳ק-אין' }] },
+        { day: 2, activities: [{ time: '08:00', activity: 'רכבל ליונגפראו' }, { time: '11:00', activity: 'ארמון הקרח' }, { time: '15:00', activity: 'נוף פנורמי' }] },
+        { day: 3, activities: [{ time: '09:00', activity: 'טיול רגלי באגם בריינץ' }, { time: '14:00', activity: 'שייט באגם' }] },
+        { day: 4, isFree: true, activities: [{ time: '', activity: 'יום חופשי' }] },
+        { day: 5, activities: [{ time: '08:00', activity: 'סקי בגרינדלוולד' }, { time: '13:00', activity: 'שיעור סקי' }] },
+        { day: 6, activities: [{ time: '10:00', activity: 'ביקור בלוצרן' }, { time: '13:00', activity: 'גשר הקפלה' }, { time: '16:00', activity: 'אריה לוצרן' }] },
+        { day: 7, isFree: true, activities: [{ time: '', activity: 'יום חופשי' }] },
+        { day: 8, activities: [{ time: '07:00', activity: 'רכבל למאטרהורן' }, { time: '12:00', activity: 'צילומים' }] },
+        { day: 9, activities: [{ time: '14:00', activity: 'קניות שוקולד שוויצרי' }, { time: '19:00', activity: 'ארוחת פונדו' }] },
+        { day: 10, activities: [{ time: '10:00', activity: 'ארוחת בוקר' }, { time: '13:00', activity: 'נסיעה לציריך' }, { time: '16:00', activity: 'טיסה חזרה' }] },
       ],
       likes: 18700,
       comments: 423,
