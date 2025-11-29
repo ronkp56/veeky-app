@@ -3,12 +3,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/RootNavigator';
+import { ProfileStackParamList } from '../navigation/RootNavigator';
 import { storage } from '../utils/storage';
 import { useTheme } from '../context/ThemeContext';
 
 export default function ProfileScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<ProfileStackParamList>>();
   const { isDarkMode } = useTheme();
   const [savedCount, setSavedCount] = useState(0);
   const [likedCount, setLikedCount] = useState(0);

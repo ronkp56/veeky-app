@@ -142,7 +142,7 @@ export default function VideoFeed({ filter = 'All', initialVideoId }: VideoFeedP
   }, [initialVideoId]);
 
   // 🔑 When scroll finishes, compute which "page" we’re on
-  const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset } = event.nativeEvent;
     const pageIndex = Math.round(contentOffset.y / height);
     setActiveIndex(pageIndex);
@@ -169,7 +169,9 @@ export default function VideoFeed({ filter = 'All', initialVideoId }: VideoFeedP
         offset: height * index,
         index,
       })}
-      onMomentumScrollEnd={handleMomentumScrollEnd} // <-- new
+      // 🔑 native will use momentum, web will use drag end
+      onMomentumScrollEnd={handleScrollEnd}
+      onScrollEndDrag={handleScrollEnd}
     />
   );
 }

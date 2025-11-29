@@ -14,7 +14,7 @@ import OrdersScreen from '../screens/OrdersScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AddVideoScreen from '../screens/AddVideoScreen';
 
-type ProfileStackParamList = {
+export type ProfileStackParamList = {
   ProfileMain: undefined;
   Saves: undefined;
   Liked: undefined;
@@ -53,6 +53,7 @@ function ProfileNavigator() {
 function MainTabs() {
   return (
     <Tab.Navigator
+      id={undefined}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
@@ -63,14 +64,16 @@ function MainTabs() {
         tabBarInactiveTintColor: '#888',
         tabBarIcon: ({ color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
-          if (route.name === 'AddVideo') iconName = 'add-circle-outline';
+          if (route.name === 'Home') iconName = 'home-outline';
+          else if (route.name === 'AddVideo') iconName = 'add-circle-outline';
           else if (route.name === 'Profile') iconName = 'person-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
+      // ✅ Add this listener
       screenListeners={{
         tabPress: () => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         },
       }}
     >
@@ -83,7 +86,7 @@ function MainTabs() {
 
 export default function RootNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="Influencer" component={InfluencerScreen} />
