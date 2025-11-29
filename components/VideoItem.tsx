@@ -1,3 +1,40 @@
+/**
+ * VideoItem.tsx
+ *
+ * This component is the heart of the Veeky video experience.
+ * It represents ONE video card in the vertical video feed (VideoFeed.tsx).
+ *
+ * Responsibilities:
+ * --------------------------------------------------------------------------
+ * ✔ Plays / pauses video automatically based on whether it's the active card
+ * ✔ Allows user tap-to-play / tap-to-pause anywhere on the screen
+ * ✔ Supports both Expo Native (expo-video player) and Web (HTML <video>)
+ * ✔ Displays all interactive video actions:
+ *      - Like (heart)
+ *      - Save (bookmark)
+ *      - Comment sheet
+ *      - Share
+ * ✔ Displays travel details overlay: influencer, title, location, days, etc.
+ * ✔ Opens modals:
+ *      - CommentsModal
+ *      - ItineraryModal (trip details)
+ * ✔ Uses local storage helpers to persist:
+ *      - Likes
+ *      - Saves
+ *      - Comments count
+ *
+ * Architecture Notes:
+ * --------------------------------------------------------------------------
+ * • This file *must stay performant* — it renders once per video on screen.
+ * • isActive is passed from VideoFeed.tsx and controls autoplay logic.
+ * • Native and Web video players behave differently:
+ *      - Native uses expo-video “VideoView” + useVideoPlayer
+ *      - Web uses <video> element with manual play() / pause()
+ * • tapIcon + animation gives immediate play/pause feedback.
+ *
+ * This is one of the most important UI components in Veeky.
+ */
+
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -9,44 +46,57 @@ import {
   Animated,
   Platform,
 } from 'react-native';
+
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { VideoData } from './VideoFeed';
 import { storage } from '../utils/storage';
 import CommentsModal from './CommentsModal';
 import ItineraryModal from './ItineraryModal';
 
+// Full-screen height/width
 const { height, width } = Dimensions.get('window');
 
 type Props = {
   video: VideoData;
-  isActive: boolean;
+  isActive: boolean; // Determines whether to auto-play this video
 };
 
 export default function VideoItem({ video, isActive }: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { uri, likes } = video;
 
-  // --- expo-video player (for native) ---
+  /* --------------------------------------------------------------------- *
+   *                VIDEO PLAYER SETUP (NATIVE vs. WEB)
+   * --------------------------------------------------------------------- */
+
+  // Native video player (Expo)
   const player = useVideoPlayer(uri, (player) => {
-    player.loop = true;
+    player.loop = true; // All videos loop on native
   });
 
-  // --- HTML video ref (for web) ---
+  // Web video <video> element ref
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  // Tracks whether the video is currently playing
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // --- center play/pause feedback icon ---
+  /* --------------------------------------------------------------------- *
+   *                TAP FEEDBACK ICON (play/pause)
+   * --------------------------------------------------------------------- */
+
   const [tapIcon, setTapIcon] = useState<'play' | 'pause' | null>(null);
   const tapIconAnim = useRef(new Animated.Value(0)).current;
 
   const showTapIcon = (type: 'play' | 'pause') => {
     setTapIcon(type);
     tapIconAnim.setValue(1);
+
+    // Fade-out animation
     Animated.timing(tapIconAnim, {
       toValue: 0,
       duration: 500,
@@ -54,7 +104,10 @@ export default function VideoItem({ video, isActive }: Props) {
     }).start(() => setTapIcon(null));
   };
 
-  // --- UI state (likes, saves, comments, itinerary) ---
+  /* --------------------------------------------------------------------- *
+   *                UI STATE (like, save, comments, itinerary)
+   * --------------------------------------------------------------------- */
+
   const [isLiked, setIsLiked] = useState(storage.isLiked(video.id));
   const [isSaved, setIsSaved] = useState(storage.isSaved(video.id));
   const [likesCount, setLikesCount] = useState(likes);
@@ -64,22 +117,21 @@ export default function VideoItem({ video, isActive }: Props) {
   );
   const [itineraryVisible, setItineraryVisible] = useState(false);
 
+  // Placeholder loading / error states (not implemented but kept for future)
   const [loading] = useState(false);
   const [error] = useState(false);
 
-  // --- when card becomes active / inactive ---
+  /* --------------------------------------------------------------------- *
+   *                AUTO PLAY / PAUSE WHEN ACTIVE CHANGES
+   * --------------------------------------------------------------------- */
+
   useEffect(() => {
     if (Platform.OS === 'web') {
       const el = videoRef.current;
       if (!el) return;
 
       if (isActive) {
-        el
-          .play()
-          .then(() => setIsPlaying(true))
-          .catch(() => {
-            // autoplay might be blocked; leave isPlaying as false
-          });
+        el.play().then(() => setIsPlaying(true)).catch(() => {});
       } else {
         el.pause();
         setIsPlaying(false);
@@ -95,23 +147,26 @@ export default function VideoItem({ video, isActive }: Props) {
     }
   }, [isActive, player]);
 
-  // --- cleanup on unmount ---
+  /* --------------------------------------------------------------------- *
+   *                CLEANUP: stop video on component unmount
+   * --------------------------------------------------------------------- */
+
   useEffect(() => {
     return () => {
       if (Platform.OS === 'web') {
-        const el = videoRef.current;
-        if (el) el.pause();
+        videoRef.current?.pause();
       } else {
         try {
           player.pause();
-        } catch (e) {
-          // ignore
-        }
+        } catch {}
       }
     };
   }, [player]);
 
-  // --- like / save / comments handlers ---
+  /* --------------------------------------------------------------------- *
+   *                BUTTON HANDLERS (like, save, comments)
+   * --------------------------------------------------------------------- */
+
   const handleLike = () => {
     const liked = storage.toggleLike(video.id);
     setIsLiked(liked);
@@ -123,18 +178,19 @@ export default function VideoItem({ video, isActive }: Props) {
     setIsSaved(saved);
   };
 
-  const handleComments = () => {
-    setCommentsVisible(true);
-  };
+  const handleComments = () => setCommentsVisible(true);
 
   const handleCloseComments = () => {
     setCommentsVisible(false);
     setCommentsCount(storage.getComments(video.id).length);
   };
 
-  // --- tap anywhere on video (not on buttons) to toggle play/pause ---
+  /* --------------------------------------------------------------------- *
+   *                TAP-TO-PLAY / TAP-TO-PAUSE BEHAVIOR
+   * --------------------------------------------------------------------- */
+
   const handleTogglePlay = () => {
-    if (!isActive) return; // ignore taps for off-screen items
+    if (!isActive) return; // ignore if not visible video
 
     if (Platform.OS === 'web') {
       const el = videoRef.current;
@@ -145,15 +201,10 @@ export default function VideoItem({ video, isActive }: Props) {
         setIsPlaying(false);
         showTapIcon('pause');
       } else {
-        el
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-            showTapIcon('play');
-          })
-          .catch(() => {
-            // if play fails, leave as not playing
-          });
+        el.play().then(() => {
+          setIsPlaying(true);
+          showTapIcon('play');
+        });
       }
     } else {
       if (isPlaying) {
@@ -168,9 +219,14 @@ export default function VideoItem({ video, isActive }: Props) {
     }
   };
 
+  /* --------------------------------------------------------------------- *
+   *                               RENDER
+   * --------------------------------------------------------------------- */
+
   return (
     <View style={styles.container}>
-      {/* Video area: different implementation for native vs web */}
+
+      {/* VIDEO LAYER: Web vs Native */}
       {Platform.OS === 'web' ? (
         <>
           <View style={styles.video}>
@@ -182,7 +238,7 @@ export default function VideoItem({ video, isActive }: Props) {
             />
           </View>
 
-          {/* Transparent tap layer above the HTML video */}
+          {/* Transparent play/pause tap area */}
           <Pressable style={StyleSheet.absoluteFill} onPress={handleTogglePlay} />
         </>
       ) : (
@@ -195,13 +251,11 @@ export default function VideoItem({ video, isActive }: Props) {
             fullscreenOptions={{ enable: false }}
             nativeControls={false}
           />
-
-          {/* Transparent tap layer above the native VideoView */}
           <Pressable style={StyleSheet.absoluteFill} onPress={handleTogglePlay} />
         </>
       )}
 
-      {/* Center play/pause feedback icon */}
+      {/* TAP FEEDBACK ICON */}
       {tapIcon && (
         <Animated.View
           pointerEvents="none"
@@ -215,7 +269,7 @@ export default function VideoItem({ video, isActive }: Props) {
         </Animated.View>
       )}
 
-      {/* Loading / error (not really used now, but kept) */}
+      {/* Optional loading/error state */}
       {loading && (
         <View style={styles.loadingContainer}>
           <Text style={styles.errorText}>Loading…</Text>
@@ -227,7 +281,7 @@ export default function VideoItem({ video, isActive }: Props) {
         </View>
       )}
 
-      {/* Overlay with actions + info */}
+      {/* OVERLAY: influencer, buttons, actions, bottom info */}
       <VideoOverlay
         video={video}
         isLiked={isLiked}
@@ -241,16 +295,20 @@ export default function VideoItem({ video, isActive }: Props) {
         onBook={() => {}}
         onDetails={() => setItineraryVisible(true)}
         onInfluencer={() =>
-          navigation.navigate('Influencer', { influencerId: video.influencer.id })
+          navigation.navigate('Influencer', {
+            influencerId: video.influencer.id,
+          })
         }
       />
 
+      {/* Comments popup */}
       <CommentsModal
         visible={commentsVisible}
         videoId={video.id}
         onClose={handleCloseComments}
       />
 
+      {/* Trip details modal */}
       <ItineraryModal
         visible={itineraryVisible}
         video={video}
@@ -260,7 +318,10 @@ export default function VideoItem({ video, isActive }: Props) {
   );
 }
 
-/* ---------- Overlay with buttons and info ---------- */
+/* =============================================================================
+ *                           VIDEO OVERLAY (RIGHT + BOTTOM UI)
+ * =============================================================================
+ */
 
 type OverlayProps = {
   video: VideoData;
@@ -293,7 +354,8 @@ function VideoOverlay({
 }: OverlayProps) {
   return (
     <View style={overlayStyles.container} pointerEvents="box-none">
-      {/* right actions */}
+
+      {/* RIGHT-SIDE ACTION BUTTONS */}
       <View style={overlayStyles.rightActions}>
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onLike}>
           <Ionicons
@@ -320,11 +382,13 @@ function VideoOverlay({
 
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onShare}>
           <Ionicons name="share-outline" size={30} color="#fff" />
-          <Text style={overlayStyles.actionText}>{formatCount(video.shares)}</Text>
+          <Text style={overlayStyles.actionText}>
+            {formatCount(video.shares)}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* bottom info */}
+      {/* BOTTOM INFORMATION AREA */}
       <View style={overlayStyles.bottomInfo}>
         <TouchableOpacity style={overlayStyles.influencerRow} onPress={onInfluencer}>
           <Text style={overlayStyles.avatar}>{video.influencer.avatar}</Text>
@@ -342,6 +406,7 @@ function VideoOverlay({
           <TouchableOpacity style={overlayStyles.detailsBtn} onPress={onDetails}>
             <Text style={overlayStyles.detailsBtnText}>פרטים</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={overlayStyles.bookBtn} onPress={onBook}>
             <Text style={overlayStyles.bookBtnText}>הזמנה מהירה</Text>
           </TouchableOpacity>
@@ -351,15 +416,16 @@ function VideoOverlay({
   );
 }
 
-/* ---------- Helpers ---------- */
+/* =============================================================================
+ *                           HELPERS + STYLES
+ * =============================================================================
+ */
 
 function formatCount(num: number): string {
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + 'M';
   if (num >= 1_000) return (num / 1_000).toFixed(1) + 'K';
   return num.toString();
 }
-
-/* ---------- Styles ---------- */
 
 const styles = StyleSheet.create({
   container: {
@@ -402,10 +468,7 @@ const styles = StyleSheet.create({
 const overlayStyles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     justifyContent: 'space-between',
   },
   rightActions: {
@@ -506,10 +569,7 @@ const overlayStyles = StyleSheet.create({
   },
   centerIconContainer: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -1,4 +1,4 @@
-// AddVideoScreen.tsx
+// AddVideoScreen.tsx mockup file.
 import { View, Text } from 'react-native';
 export default function AddVideoScreen() {
   return (

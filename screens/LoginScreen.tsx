@@ -1,4 +1,31 @@
-// screens/LoginScreen.tsx
+/**
+ * LoginScreen.tsx
+ *
+ * This screen handles the user authentication flow for Veeky.
+ *
+ * Responsibilities:
+ * --------------------------------------------------------------------
+ * ✔ Collect email + password
+ * ✔ Validate inputs (email format + minimum password length)
+ * ✔ Handle login (simulated for now)
+ * ✔ Support alternative login methods (Google / Apple placeholders)
+ * ✔ Allow entering as a guest (skip login)
+ * ✔ Display theme-aware UI (light/dark)
+ * ✔ Provide accessible and mobile-friendly form layout
+ *
+ * Architecture Notes:
+ * --------------------------------------------------------------------
+ * • This is a **local-only login mock** — no backend call yet.
+ * • Real authentication will replace:
+ *       await wait(...)
+ *   with an API call + secure token storage.
+ * • UI uses:
+ *       - SafeAreaView
+ *       - KeyboardAvoidingView (for iOS)
+ *       - ScrollView (to avoid clipping form on smaller screens)
+ * • Theme is dynamically generated based on color scheme.
+ */
+
 import React, { useMemo, useState } from 'react';
 import {
   View,
@@ -20,29 +47,64 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
   const scheme = useColorScheme();
+
+  /**
+   * Theme object dynamically computed for light or dark mode.
+   * Uses getTheme() helper at bottom of file.
+   */
   const c = useMemo(() => getTheme(scheme === 'dark'), [scheme]);
 
+  /**
+   * Controlled input states.
+   */
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  /**
+   * Show/hide password toggle.
+   */
   const [showPw, setShowPw] = useState(false);
+
+  /**
+   * UI State: loading + error messages.
+   */
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()), [email]);
-  const passwordValid = useMemo(() => password.length >= 8, [password]);
-  const formValid = useMemo(() => emailValid && passwordValid, [emailValid, passwordValid]);
+  /**
+   * Input validation logic.
+   */
+  const emailValid = useMemo(
+    () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()),
+    [email]
+  );
 
+  const passwordValid = useMemo(() => password.length >= 8, [password]);
+
+  const formValid = useMemo(
+    () => emailValid && passwordValid,
+    [emailValid, passwordValid]
+  );
+
+  /**
+   * Handle standard email+password login.
+   * For now this only simulates authentication.
+   */
   const handleLogin = async () => {
     setError(null);
+
     if (!formValid) {
       setError("נא למלא אימייל וסיסמה תקינים (מינ' 8 תווים).");
       return;
     }
+
     try {
       setLoading(true);
-      // TODO: replace with your real auth call, e.g. await api.login({ email, password })
-      await wait(900); // simulate network
-      // TODO: store tokens securely (expo-secure-store) and hydrate user state
+
+      // TODO: Replace with real backend authentication
+      await wait(900);
+
+      // TODO: Secure token storage (expo-secure-store)
       navigation.replace('MainTabs');
     } catch (e: unknown) {
       console.error('Login failed:', e);
@@ -52,11 +114,15 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
+  /**
+   * Handle Google login.
+   * Placeholder for real OAuth integration.
+   */
   const handleGoogleLogin = async () => {
     setError(null);
     setLoading(true);
     try {
-      // TODO: integrate OAuth (e.g., expo-auth-session / backend)
+      // TODO: Implement expo-auth-session or backend OAuth
       await wait(600);
       navigation.replace('MainTabs');
     } catch (e: unknown) {
@@ -67,8 +133,11 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
+  /**
+   * Guest mode login — skip authentication entirely.
+   */
   const continueAsGuest = () => {
-    // Optional: flag guest mode in your global state
+    // Optional: mark guest mode in global state
     navigation.replace('MainTabs');
   };
 
@@ -78,8 +147,13 @@ export default function LoginScreen({ navigation }: Props) {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          {/* Brand / Title */}
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* ------------------------------------------------------------
+              BRAND HEADER
+             ------------------------------------------------------------ */}
           <View style={styles.header}>
             <Text style={[styles.brand, { color: c.text }]}>Veeky</Text>
             <Text style={[styles.subtitle, { color: c.muted }]}>
@@ -87,33 +161,51 @@ export default function LoginScreen({ navigation }: Props) {
             </Text>
           </View>
 
-          {/* Form */}
-          <View style={[styles.card, { backgroundColor: c.card, borderColor: c.border }]}>
+          {/* ------------------------------------------------------------
+              LOGIN FORM CARD
+             ------------------------------------------------------------ */}
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: c.card, borderColor: c.border },
+            ]}
+          >
+            {/* Email Field */}
             <View style={styles.field}>
               <Text style={[styles.label, { color: c.muted }]}>אימייל</Text>
+
               <TextInput
                 value={email}
                 onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                textContentType="emailAddress"
                 placeholder="name@example.com"
                 placeholderTextColor={c.placeholder}
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="next"
                 style={[
                   styles.input,
-                  { color: c.text, borderColor: c.inputBorder, backgroundColor: c.inputBg },
+                  {
+                    color: c.text,
+                    borderColor: c.inputBorder,
+                    backgroundColor: c.inputBg,
+                  },
                 ]}
                 accessibilityLabel="Email"
-                returnKeyType="next"
-                autoCorrect={false}
               />
+
               {!emailValid && email.length > 0 && (
-                <Text style={[styles.helper, { color: c.danger }]}>אימייל לא תקין</Text>
+                <Text style={[styles.helper, { color: c.danger }]}>
+                  אימייל לא תקין
+                </Text>
               )}
             </View>
 
+            {/* Password Field */}
             <View style={styles.field}>
               <Text style={[styles.label, { color: c.muted }]}>סיסמה</Text>
+
               <View style={styles.passwordRow}>
                 <TextInput
                   value={password}
@@ -121,16 +213,22 @@ export default function LoginScreen({ navigation }: Props) {
                   secureTextEntry={!showPw}
                   placeholder="••••••••"
                   placeholderTextColor={c.placeholder}
-                  style={[
-                    styles.input,
-                    styles.passwordInput,
-                    { color: c.text, borderColor: c.inputBorder, backgroundColor: c.inputBg },
-                  ]}
-                  accessibilityLabel="Password"
                   textContentType="password"
                   returnKeyType="done"
                   onSubmitEditing={handleLogin}
+                  style={[
+                    styles.input,
+                    styles.passwordInput,
+                    {
+                      color: c.text,
+                      borderColor: c.inputBorder,
+                      backgroundColor: c.inputBg,
+                    },
+                  ]}
+                  accessibilityLabel="Password"
                 />
+
+                {/* Show/Hide Password Button */}
                 <TouchableOpacity
                   onPress={() => setShowPw((s) => !s)}
                   accessibilityRole="button"
@@ -140,9 +238,12 @@ export default function LoginScreen({ navigation }: Props) {
                     { borderColor: c.inputBorder, backgroundColor: c.chipBg },
                   ]}
                 >
-                  <Text style={{ color: c.muted }}>{showPw ? 'הסתר' : 'הצג'}</Text>
+                  <Text style={{ color: c.muted }}>
+                    {showPw ? 'הסתר' : 'הצג'}
+                  </Text>
                 </TouchableOpacity>
               </View>
+
               {!passwordValid && password.length > 0 && (
                 <Text style={[styles.helper, { color: c.danger }]}>
                   סיסמה חייבת לכלול 8 תווים לפחות
@@ -150,76 +251,108 @@ export default function LoginScreen({ navigation }: Props) {
               )}
             </View>
 
-            {!!error && <Text style={[styles.error, { color: c.danger }]}>{error}</Text>}
+            {/* Error message (if login fails) */}
+            {!!error && (
+              <Text style={[styles.error, { color: c.danger }]}>{error}</Text>
+            )}
 
+            {/* Login Button */}
             <TouchableOpacity
               style={[
                 styles.primaryBtn,
-                { backgroundColor: formValid ? c.primary : c.disabled, opacity: loading ? 0.7 : 1 },
+                {
+                  backgroundColor: formValid ? c.primary : c.disabled,
+                  opacity: loading ? 0.7 : 1,
+                },
               ]}
               onPress={handleLogin}
               disabled={loading || !formValid}
               accessibilityRole="button"
               accessibilityLabel="התחברות"
             >
-              {loading ? <ActivityIndicator color={c.primaryText} /> : <Text style={[styles.primaryText, { color: c.primaryText }]}>התחברות</Text>}
+              {loading ? (
+                <ActivityIndicator color={c.primaryText} />
+              ) : (
+                <Text style={[styles.primaryText, { color: c.primaryText }]}>
+                  התחברות
+                </Text>
+              )}
             </TouchableOpacity>
 
+            {/* Forgot Password link */}
             <TouchableOpacity
-              style={[styles.linkRow]}
+              style={styles.linkRow}
               onPress={() => {
-                /* TODO: navigate to ForgotPassword */
+                // TODO: Navigate to forgot-password screen
               }}
-              accessibilityRole="button"
             >
               <Text style={[styles.link, { color: c.link }]}>שכחת סיסמה?</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Divider */}
+          {/* ------------------------------------------------------------
+              DIVIDER (---- או ----)
+             ------------------------------------------------------------ */}
           <View style={styles.dividerRow}>
             <View style={[styles.divider, { backgroundColor: c.border }]} />
             <Text style={{ color: c.muted, marginHorizontal: 8 }}>או</Text>
             <View style={[styles.divider, { backgroundColor: c.border }]} />
           </View>
 
-          {/* Socials */}
+          {/* ------------------------------------------------------------
+              SOCIAL / OAUTH OPTIONS
+             ------------------------------------------------------------ */}
           <View style={styles.socials}>
             <TouchableOpacity
               onPress={handleGoogleLogin}
-              style={[styles.socialBtn, { borderColor: c.border, backgroundColor: c.card }]}
-              accessibilityRole="button"
+              style={[
+                styles.socialBtn,
+                { borderColor: c.border, backgroundColor: c.card },
+              ]}
             >
-              <Text style={[styles.socialText, { color: c.text }]}>המשך עם Google</Text>
+              <Text style={[styles.socialText, { color: c.text }]}>
+                המשך עם Google
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => {
-                /* TODO: Apple OAuth */
+                // TODO: Apple login
               }}
-              style={[styles.socialBtn, { borderColor: c.border, backgroundColor: c.card }]}
-              accessibilityRole="button"
+              style={[
+                styles.socialBtn,
+                { borderColor: c.border, backgroundColor: c.card },
+              ]}
             >
-              <Text style={[styles.socialText, { color: c.text }]}>המשך עם Apple</Text>
+              <Text style={[styles.socialText, { color: c.text }]}>
+                המשך עם Apple
+              </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Footer actions */}
+          {/* ------------------------------------------------------------
+              BOTTOM ACTIONS
+             ------------------------------------------------------------ */}
           <View style={styles.bottomActions}>
             <TouchableOpacity
               onPress={() => {
-                /* TODO: navigate to SignUp */
+                // TODO: Navigate to signup screen
               }}
             >
-              <Text style={[styles.link, { color: c.link }]}>אין לך חשבון? יצירת חשבון</Text>
+              <Text style={[styles.link, { color: c.link }]}>
+                אין לך חשבון? יצירת חשבון
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={continueAsGuest}>
-              <Text style={[styles.linkMuted, { color: c.muted }]}>המשך כאורח</Text>
+              <Text style={[styles.linkMuted, { color: c.muted }]}>
+                המשך כאורח
+              </Text>
             </TouchableOpacity>
 
             <Text style={[styles.terms, { color: c.muted }]}>
-              בלחיצה על “התחברות” אתה מאשר את <Text style={{ color: c.link }}>תנאי השימוש</Text> ו
+              בלחיצה על “התחברות” אתה מאשר את{' '}
+              <Text style={{ color: c.link }}>תנאי השימוש</Text> ו
               <Text style={{ color: c.link }}>מדיניות הפרטיות</Text>.
             </Text>
           </View>
@@ -229,11 +362,22 @@ export default function LoginScreen({ navigation }: Props) {
   );
 }
 
-// ---- helpers & theme ----
+/* --------------------------------------------------------------------
+   HELPERS + THEME SYSTEM
+-------------------------------------------------------------------- */
+
+/**
+ * wait(ms): simple delay utility for simulating network calls.
+ */
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Generates a themed color palette for light or dark modes.
+ * This is used throughout the screen for consistent design.
+ */
 function getTheme(dark: boolean) {
   const primary = '#00D5FF';
+
   return dark
     ? {
         bg: '#0B0B0C',
@@ -269,9 +413,15 @@ function getTheme(dark: boolean) {
       };
 }
 
+/* --------------------------------------------------------------------
+   STYLES
+-------------------------------------------------------------------- */
+
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+
   scroll: { flexGrow: 1, padding: 20, justifyContent: 'center' },
+
   header: { alignItems: 'center', marginBottom: 24 },
   brand: { fontSize: 40, fontWeight: '800', letterSpacing: 0.5 },
   subtitle: { marginTop: 6, fontSize: 14, textAlign: 'center' },
@@ -282,8 +432,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     gap: 12,
   },
+
   field: { gap: 6 },
   label: { fontSize: 13, fontWeight: '600' },
+
   input: {
     borderWidth: 1,
     borderRadius: 12,
@@ -291,9 +443,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
   },
+
   helper: { fontSize: 12, marginTop: 4 },
+
   passwordRow: { flexDirection: 'row', alignItems: 'center' },
   passwordInput: { flex: 1 },
+
   showBtn: {
     marginLeft: 8,
     paddingHorizontal: 12,
@@ -328,6 +483,7 @@ const styles = StyleSheet.create({
   divider: { height: 1, flex: 1, borderRadius: 1 },
 
   socials: { gap: 12 },
+
   socialBtn: {
     borderWidth: 1,
     height: 50,
@@ -342,5 +498,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     gap: 8,
   },
+
   terms: { textAlign: 'center', fontSize: 12, lineHeight: 18, marginTop: 6 },
 });

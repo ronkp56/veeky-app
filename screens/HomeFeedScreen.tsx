@@ -1,11 +1,47 @@
+/**
+ * HomeFeedScreen.tsx
+ *
+ * This is the main screen of Veeky — the TikTok-style home feed.
+ * It decides what the user sees when they open the app.
+ *
+ * Responsibilities:
+ * --------------------------------------------------------------------
+ * ✔ Shows the top filter bar (All / Trips / Lodging / Entertainment)
+ * ✔ Switches between **native feed** (VideoFeed) and **web feed**
+ *   (WebVideoFeed) depending on the platform
+ * ✔ Forwards "initialVideoId" so navigation can open the feed at a
+ *   specific video (e.g., from influencer page)
+ * ✔ Maintains filter selection UI state
+ * ✔ Has a minimal, black design (Veeky’s style)
+ *
+ * Architecture Notes:
+ * --------------------------------------------------------------------
+ * • WebVideoFeed is lazily loaded ONLY on web (dynamic require),
+ *   because the native mobile version uses expo-video.
+ * • VideoFeed auto-plays videos only when visible.
+ * • Filters include icons for search & location, and text items for
+ *   actual categories.
+ * • This screen is simple but VERY important in the navigation stack.
+ */
+
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Platform,
+} from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import VideoFeed from '../components/VideoFeed';
 
 type FilterType = 'All' | 'Trips' | 'Lodging' | 'Entertainment';
 
-// Dynamic web feed (only loaded on web)
+/**
+ * On web, we load WebVideoFeed dynamically so native builds do not bundle it.
+ * This avoids errors since WebVideoFeed uses HTML <video>.
+ */
 let WebVideoFeed: React.ComponentType<{ filter?: FilterType }> | null = null;
 
 if (Platform.OS === 'web') {
@@ -20,9 +56,16 @@ type FilterItem = {
 };
 
 export default function HomeFeedScreen({ route }: any) {
+  // Selected category filter
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('All');
+
+  // In case navigation sends us a specific video to jump to
   const videoId = route?.params?.videoId;
 
+  /**
+   * List of filter items displayed in the top bar.
+   * Some have icons, some are text-only categories.
+   */
   const filters: FilterItem[] = [
     { key: 'search', icon: 'search-outline', label: '' },
     { key: 'All', label: 'All' },
@@ -36,7 +79,9 @@ export default function HomeFeedScreen({ route }: any) {
 
   return (
     <View style={styles.container}>
-      {/* Top filter bar */}
+      {/* -----------------------------------------------------------
+           FILTER BAR (top navigation chips)
+         ----------------------------------------------------------- */}
       <View style={styles.filterBar}>
         {filters.map((f) => (
           <TouchableOpacity
@@ -46,6 +91,7 @@ export default function HomeFeedScreen({ route }: any) {
               selectedFilter === f.key && styles.filterItemActive,
             ]}
             onPress={() => {
+              // Update filter only if it's one of the categories
               if (
                 f.key === 'All' ||
                 f.key === 'Trips' ||
@@ -56,9 +102,11 @@ export default function HomeFeedScreen({ route }: any) {
               }
             }}
           >
+            {/* Icon filters (search / location) */}
             {f.icon ? (
               <Ionicons name={f.icon as any} size={22} color="#fff" />
             ) : (
+              // Text filters (categories)
               <Text
                 style={[
                   styles.filterText,
@@ -72,7 +120,11 @@ export default function HomeFeedScreen({ route }: any) {
         ))}
       </View>
 
-      {/* Main feed: native vs web */}
+      {/* -----------------------------------------------------------
+           MAIN VIDEO FEED
+           - Web uses WebVideoFeed (HTML <video>)
+           - Native uses VideoFeed (expo-video)
+         ----------------------------------------------------------- */}
       <View style={{ flex: 1 }}>
         {isWeb && WebVideoFeed ? (
           <WebVideoFeed filter={selectedFilter} />
@@ -84,12 +136,14 @@ export default function HomeFeedScreen({ route }: any) {
   );
 }
 
-/* ---------- Styles ---------- */
+/* --------------------------------------------------------------------
+   STYLES
+-------------------------------------------------------------------- */
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#000', // Pure black Veeky theme
   },
   filterBar: {
     flexDirection: 'row',
