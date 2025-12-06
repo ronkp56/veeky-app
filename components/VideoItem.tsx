@@ -402,6 +402,16 @@ function VideoOverlay({
         <Text style={overlayStyles.days}>🗓️ {video.days} ימים</Text>
         <Text style={overlayStyles.location}>📍 {video.location}</Text>
 
+        {video.tags && video.tags.length > 0 && (
+          <View style={overlayStyles.tagsContainer}>
+            {video.tags.slice(0, 8).map((tag) => (
+              <View key={tag} style={overlayStyles.tagPill}>
+                <Text style={overlayStyles.tagText}>#{tag}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={overlayStyles.buttons}>
           <TouchableOpacity style={overlayStyles.detailsBtn} onPress={onDetails}>
             <Text style={overlayStyles.detailsBtnText}>פרטים</Text>
@@ -536,6 +546,25 @@ const overlayStyles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 8,
+  },
+  tagPill: {
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 4,
+    marginTop: 4,
+  },
+  tagText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
   },
   buttons: {
     flexDirection: 'row',

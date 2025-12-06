@@ -74,6 +74,19 @@ export type VideoData = {
   likes: number;
   comments: number;
   shares: number;
+
+  /**
+   * Tags describe the trip in a way that is:
+   * - searchable (later: search by tags)
+   * - personal (used to learn user interests)
+   * - useful for creators to describe their business
+   *
+   * Convention:
+   * - Up to 20 tags per video (enforced in AddVideo / backend)
+   * - Each tag is a short word/phrase WITHOUT the "#" prefix.
+   *   UI will render it as #tag.
+   */
+  tags: string[];
 };
 
 /**
@@ -102,6 +115,7 @@ export const MOCK_DATA: VideoData[] = [
     likes: 12500,
     comments: 340,
     shares: 89,
+    tags: ['יוון', 'זוגות', 'חופשת קיץ', 'ים', 'מלון בוטיק'],
   },
   {
     id: '2', 
@@ -122,6 +136,7 @@ export const MOCK_DATA: VideoData[] = [
     likes: 23400,
     comments: 567,
     shares: 234,
+    tags: ['דובאי', 'זוגות', 'חופשת קיץ', 'ים', 'מלון יוקרה'],
   },
   {
     id: '3', 
@@ -141,6 +156,7 @@ export const MOCK_DATA: VideoData[] = [
     likes: 8900,
     comments: 156,
     shares: 45,
+    tags: ['ברצלונה', 'זוגות', 'חופשת קיץ', 'פארק'],
   },
   {
     id: '4', 
@@ -166,6 +182,7 @@ export const MOCK_DATA: VideoData[] = [
     likes: 18700,
     comments: 423,
     shares: 167,
+    tags: ['טראק', 'זוגות', 'חורף', 'נוף', 'מלון בוטיק'],
   },
 ];
 
