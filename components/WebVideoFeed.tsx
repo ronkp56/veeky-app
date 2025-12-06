@@ -290,6 +290,12 @@ function WebVideoItem({
     });
   };
 
+  const handleTagPress = (tag: string) => {
+    console.log('[Web TagPress]', tag);
+    // TODO: open tag search page / apply filter
+  };
+
+
   return (
     <View style={[styles.itemContainer, { height }]}>
       <View style={styles.videoWrapper}>
@@ -371,13 +377,23 @@ function WebVideoItem({
           <Text style={styles.location}>📍 {video.location}</Text>
 
           {video.tags && video.tags.length > 0 && (
-            <View style={styles.tagsContainer}>
-              {video.tags.slice(0, 8).map((tag) => (
-                <View key={tag} style={styles.tagPill}>
+            <ScrollView
+              style={styles.tagsScroll}
+              contentContainerStyle={styles.tagsContent}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {video.tags.map((tag) => (
+                <TouchableOpacity
+                  key={tag}
+                  style={styles.tagPill}
+                  onPress={() => handleTagPress(tag)}
+                  activeOpacity={0.8}
+                >
                   <Text style={styles.tagText}>#{tag}</Text>
-                </View>
+                </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           )}
 
           <View style={styles.buttons}>
@@ -510,13 +526,22 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 8,
   },
+  tagsScroll: {
+    maxHeight: 34,
+    marginBottom: 8,
+  },
+  tagsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingRight: 12,
+  },
   tagPill: {
     backgroundColor: 'rgba(0,0,0,0.55)',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
     marginRight: 4,
-    marginTop: 4,
   },
   tagText: {
     color: '#fff',

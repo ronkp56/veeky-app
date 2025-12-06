@@ -45,6 +45,7 @@ import {
   Pressable,
   Animated,
   Platform,
+  ScrollView,
 } from 'react-native';
 
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -219,6 +220,13 @@ export default function VideoItem({ video, isActive }: Props) {
     }
   };
 
+  const handleTagPress = (tag: string) => {
+    // Foundation for future tag search
+    console.log('[TagPress]', tag);
+    // TODO: navigate to Tag search screen / apply filter
+  };
+
+
   /* --------------------------------------------------------------------- *
    *                               RENDER
    * --------------------------------------------------------------------- */
@@ -352,6 +360,10 @@ function VideoOverlay({
   onDetails,
   onInfluencer,
 }: OverlayProps) {
+  function handleTagPress(tag: string): void {
+    throw new Error('Function not implemented.');
+  }
+
   return (
     <View style={overlayStyles.container} pointerEvents="box-none">
 
@@ -403,13 +415,23 @@ function VideoOverlay({
         <Text style={overlayStyles.location}>📍 {video.location}</Text>
 
         {video.tags && video.tags.length > 0 && (
-          <View style={overlayStyles.tagsContainer}>
-            {video.tags.slice(0, 8).map((tag) => (
-              <View key={tag} style={overlayStyles.tagPill}>
+          <ScrollView
+            style={overlayStyles.tagsScroll}
+            contentContainerStyle={overlayStyles.tagsContent}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
+            {video.tags.map((tag) => (
+              <TouchableOpacity
+                key={tag}
+                style={overlayStyles.tagPill}
+                onPress={() => handleTagPress(tag)}
+                activeOpacity={0.8}
+              >
                 <Text style={overlayStyles.tagText}>#{tag}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         )}
 
         <View style={overlayStyles.buttons}>
@@ -553,13 +575,22 @@ const overlayStyles = StyleSheet.create({
     gap: 6,
     marginBottom: 8,
   },
+  tagsScroll: {
+    maxHeight: 34,
+    marginBottom: 8,
+  },
+  tagsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingRight: 12,
+  },
   tagPill: {
     backgroundColor: 'rgba(0,0,0,0.55)',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
     marginRight: 4,
-    marginTop: 4,
   },
   tagText: {
     color: '#fff',
