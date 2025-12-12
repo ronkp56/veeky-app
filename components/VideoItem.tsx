@@ -68,7 +68,9 @@ type Props = {
 };
 
 export default function VideoItem({ video, isActive }: Props) {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
   const { uri, likes } = video;
 
   /* --------------------------------------------------------------------- *
@@ -76,8 +78,8 @@ export default function VideoItem({ video, isActive }: Props) {
    * --------------------------------------------------------------------- */
 
   // Native video player (Expo)
-  const player = useVideoPlayer(uri, (player) => {
-    player.loop = true; // All videos loop on native
+  const player = useVideoPlayer(uri, (p) => {
+    p.loop = true; // All videos loop on native
   });
 
   // Web video <video> element ref
@@ -191,7 +193,7 @@ export default function VideoItem({ video, isActive }: Props) {
    * --------------------------------------------------------------------- */
 
   const handleTogglePlay = () => {
-    if (!isActive) return; // ignore if not visible video
+    if (!isActive) return;
 
     if (Platform.OS === 'web') {
       const el = videoRef.current;
@@ -220,12 +222,14 @@ export default function VideoItem({ video, isActive }: Props) {
     }
   };
 
-  const handleTagPress = (tag: string) => {
-    // Foundation for future tag search
-    console.log('[TagPress]', tag);
-    // TODO: navigate to Tag search screen / apply filter
-  };
+  /* --------------------------------------------------------------------- *
+   *                TAG PRESS (opens Search screen)
+   * --------------------------------------------------------------------- */
 
+  const handleTagPress = (tag: string) => {
+    // Navigate to Search with a pre-filled query and "tags" mode
+    navigation.navigate('Search', { query: tag, mode: 'tags' });
+  };
 
   /* --------------------------------------------------------------------- *
    *                               RENDER
@@ -233,7 +237,6 @@ export default function VideoItem({ video, isActive }: Props) {
 
   return (
     <View style={styles.container}>
-
       {/* VIDEO LAYER: Web vs Native */}
       {Platform.OS === 'web' ? (
         <>
@@ -246,8 +249,10 @@ export default function VideoItem({ video, isActive }: Props) {
             />
           </View>
 
-          {/* Transparent play/pause tap area */}
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleTogglePlay} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={handleTogglePlay}
+          />
         </>
       ) : (
         <>
@@ -259,7 +264,10 @@ export default function VideoItem({ video, isActive }: Props) {
             fullscreenOptions={{ enable: false }}
             nativeControls={false}
           />
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleTogglePlay} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={handleTogglePlay}
+          />
         </>
       )}
 
@@ -289,7 +297,7 @@ export default function VideoItem({ video, isActive }: Props) {
         </View>
       )}
 
-      {/* OVERLAY: influencer, buttons, actions, bottom info */}
+      {/* OVERLAY */}
       <VideoOverlay
         video={video}
         isLiked={isLiked}
@@ -307,6 +315,7 @@ export default function VideoItem({ video, isActive }: Props) {
             influencerId: video.influencer.id,
           })
         }
+        onTagPress={handleTagPress}
       />
 
       {/* Comments popup */}
@@ -344,6 +353,9 @@ type OverlayProps = {
   onBook: () => void;
   onDetails: () => void;
   onInfluencer: () => void;
+
+  // ✅ NEW: tag click handler
+  onTagPress: (tag: string) => void;
 };
 
 function VideoOverlay({
@@ -359,14 +371,10 @@ function VideoOverlay({
   onBook,
   onDetails,
   onInfluencer,
+  onTagPress,
 }: OverlayProps) {
-  function handleTagPress(tag: string): void {
-    throw new Error('Function not implemented.');
-  }
-
   return (
     <View style={overlayStyles.container} pointerEvents="box-none">
-
       {/* RIGHT-SIDE ACTION BUTTONS */}
       <View style={overlayStyles.rightActions}>
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onLike}>
@@ -380,7 +388,9 @@ function VideoOverlay({
 
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onComment}>
           <Ionicons name="chatbubble-outline" size={30} color="#fff" />
-          <Text style={overlayStyles.actionText}>{formatCount(commentsCount)}</Text>
+          <Text style={overlayStyles.actionText}>
+            {formatCount(commentsCount)}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={overlayStyles.actionBtn} onPress={onSave}>
@@ -402,7 +412,10 @@ function VideoOverlay({
 
       {/* BOTTOM INFORMATION AREA */}
       <View style={overlayStyles.bottomInfo}>
-        <TouchableOpacity style={overlayStyles.influencerRow} onPress={onInfluencer}>
+        <TouchableOpacity
+          style={overlayStyles.influencerRow}
+          onPress={onInfluencer}
+        >
           <Text style={overlayStyles.avatar}>{video.influencer.avatar}</Text>
           <Text style={overlayStyles.influencerName}>
             {video.influencer.name}
@@ -425,7 +438,7 @@ function VideoOverlay({
               <TouchableOpacity
                 key={tag}
                 style={overlayStyles.tagPill}
-                onPress={() => handleTagPress(tag)}
+                onPress={() => onTagPress(tag)}
                 activeOpacity={0.8}
               >
                 <Text style={overlayStyles.tagText}>#{tag}</Text>
@@ -500,7 +513,10 @@ const styles = StyleSheet.create({
 const overlayStyles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'space-between',
   },
   rightActions: {
@@ -569,12 +585,6 @@ const overlayStyles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginBottom: 8,
-  },
   tagsScroll: {
     maxHeight: 34,
     marginBottom: 8,
@@ -629,7 +639,10 @@ const overlayStyles = StyleSheet.create({
   },
   centerIconContainer: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
   },

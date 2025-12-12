@@ -42,6 +42,9 @@ import LikedScreen from '../screens/LikedScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AddVideoScreen from '../screens/AddVideoScreen';
+import SearchScreen from '../screens/SearchScreen';
+
+import type { SearchMode } from '../screens/SearchScreen';
 
 /**
  * Type definitions for the stack that holds all profile-related screens.
@@ -65,6 +68,8 @@ export type RootStackParamList = {
   Login: undefined;
   MainTabs: { videoId?: string } | undefined;
   Influencer: { influencerId: string };
+
+  Search: { query?: string; mode?: 'all' | 'tags' | 'location' | 'influencer' | 'title' } | undefined;
 };
 
 /**
@@ -175,6 +180,8 @@ export default function RootNavigator() {
       <Stack.Screen name="Login" component={LoginScreen} />
       {/* Main application tabs (Home, AddVideo, Profile) */}
       <Stack.Screen name="MainTabs" component={MainTabs} />
+      {/* Search screen */}
+      <Stack.Screen name="Search" component={SearchScreen} />
       {/* Influencer profile / details screen */}
       <Stack.Screen name="Influencer" component={InfluencerScreen} />
     </Stack.Navigator>

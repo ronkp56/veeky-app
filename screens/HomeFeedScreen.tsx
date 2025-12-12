@@ -36,6 +36,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import VideoFeed from '../components/VideoFeed';
 
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/RootNavigator';
+
 type FilterType = 'All' | 'Trips' | 'Lodging' | 'Entertainment';
 
 /**
@@ -56,6 +60,8 @@ type FilterItem = {
 };
 
 export default function HomeFeedScreen({ route }: any) {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
   // Selected category filter
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('All');
 
@@ -91,6 +97,11 @@ export default function HomeFeedScreen({ route }: any) {
               selectedFilter === f.key && styles.filterItemActive,
             ]}
             onPress={() => {
+              if (f.key === 'search') {
+                navigation.navigate('Search');
+                return;
+              }
+
               // Update filter only if it's one of the categories
               if (
                 f.key === 'All' ||
