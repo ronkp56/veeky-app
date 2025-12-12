@@ -31,6 +31,7 @@ import React from 'react';
 import * as Haptics from 'expo-haptics';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import type { NavigatorScreenParams } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import LoginScreen from '../screens/LoginScreen';
@@ -64,7 +65,7 @@ export type ProfileStackParamList = {
  */
 export type RootStackParamList = {
   Login: undefined;
-  MainTabs: { videoId?: string } | undefined;
+  MainTabs: NavigatorScreenParams<MainTabsParamList> | undefined;
   Influencer: { influencerId: string };
 
   Search: { query?: string; mode?: 'all' | 'tags' | 'location' | 'influencer' | 'title' } | undefined;

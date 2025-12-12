@@ -85,24 +85,27 @@ export default function SearchScreen({ route }: Props) {
     { key: 'title', label: 'שם', icon: 'text-outline' },
   ];
 
-  const openVideoInFeed = (videoId: string) => {
-    // Same idea you already use in Saves/Liked/Influencer:
-    // Reset → MainTabs → Home(videoId)
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [
-          {
-            name: 'MainTabs' as never,
-            params: {
-              screen: 'Home',
-              params: { videoId },
-            },
-          } as never,
-        ],
-      })
-    );
-  };
+    const openVideoInFeed = (videoId: string) => {
+        navigation.dispatch(
+            CommonActions.reset({
+            index: 0,
+            routes: [
+                {
+                name: 'MainTabs',
+                state: {
+                    index: 0,
+                    routes: [
+                    {
+                        name: 'Home',
+                        params: { videoId },
+                    },
+                    ],
+                },
+                },
+            ],
+            })
+        );
+    };
 
   return (
     <View style={styles.container}>
