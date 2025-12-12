@@ -291,10 +291,8 @@ function WebVideoItem({
   };
 
   const handleTagPress = (tag: string) => {
-    console.log('[Web TagPress]', tag);
-    // TODO: open tag search page / apply filter
+    navigation.navigate('Search', { query: tag, mode: 'tags' });
   };
-
 
   return (
     <View style={[styles.itemContainer, { height }]}>

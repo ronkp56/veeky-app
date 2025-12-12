@@ -44,8 +44,6 @@ import SettingsScreen from '../screens/SettingsScreen';
 import AddVideoScreen from '../screens/AddVideoScreen';
 import SearchScreen from '../screens/SearchScreen';
 
-import type { SearchMode } from '../screens/SearchScreen';
-
 /**
  * Type definitions for the stack that holds all profile-related screens.
  * This is used for type-safe navigation within the Profile stack.
