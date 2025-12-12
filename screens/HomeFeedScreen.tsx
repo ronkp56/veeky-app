@@ -46,7 +46,7 @@ type FilterType = 'All' | 'Trips' | 'Lodging' | 'Entertainment';
  * On web, we load WebVideoFeed dynamically so native builds do not bundle it.
  * This avoids errors since WebVideoFeed uses HTML <video>.
  */
-let WebVideoFeed: React.ComponentType<{ filter?: FilterType }> | null = null;
+let WebVideoFeed: React.ComponentType<{ filter?: FilterType; initialVideoId?: string }> | null = null;
 
 if (Platform.OS === 'web') {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -138,7 +138,7 @@ export default function HomeFeedScreen({ route }: any) {
          ----------------------------------------------------------- */}
       <View style={{ flex: 1 }}>
         {isWeb && WebVideoFeed ? (
-          <WebVideoFeed filter={selectedFilter} />
+          <WebVideoFeed filter={selectedFilter} initialVideoId={videoId} />
         ) : (
           <VideoFeed filter={selectedFilter} initialVideoId={videoId} />
         )}

@@ -69,9 +69,10 @@ type FilterType = 'All' | 'Trips' | 'Lodging' | 'Entertainment';
 
 type WebVideoFeedProps = {
   filter?: FilterType;
+  initialVideoId?: string;
 };
 
-export default function WebVideoFeed({ filter = 'All' }: WebVideoFeedProps) {
+export default function WebVideoFeed({ filter = 'All', initialVideoId }: WebVideoFeedProps) {
   const { height } = useWindowDimensions();
 
   /**
@@ -84,6 +85,20 @@ export default function WebVideoFeed({ filter = 'All' }: WebVideoFeedProps) {
     [filter]
   );
 
+  useEffect(() => {
+    if (!initialVideoId) return;
+
+    const index = filteredData.findIndex((v) => v.id === initialVideoId);
+    if (index === -1) return;
+
+    // Scroll to the correct "page" and start playing it
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: height * index, animated: false });
+      playIndex(index);
+    }, 50);
+  }, [initialVideoId, filteredData, height]);
+
+
   /**
    * Index of the video that is currently visible / playing
    */
@@ -94,6 +109,9 @@ export default function WebVideoFeed({ filter = 'All' }: WebVideoFeedProps) {
    * (One ref per video item)
    */
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+  /* Add a scrollViewRef and a useEffect to jump */
+  const scrollViewRef = useRef<ScrollView>(null);
 
   /**
    * Used to detect scroll end on Web.
@@ -190,6 +208,7 @@ export default function WebVideoFeed({ filter = 'All' }: WebVideoFeedProps) {
       showsVerticalScrollIndicator={false}
       scrollEventThrottle={16}
       onScroll={handleScroll}
+      ref={scrollViewRef}
     >
       {filteredData.map((video, index) => (
         <WebVideoItem

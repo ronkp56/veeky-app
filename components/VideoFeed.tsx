@@ -220,7 +220,7 @@ export default function VideoFeed({
    */
   useEffect(() => {
     if (initialVideoId && flatListRef.current) {
-      const index = MOCK_DATA.findIndex((item) => item.id === initialVideoId);
+      const index = filteredData.findIndex((item) => item.id === initialVideoId);
 
       if (index !== -1) {
         // Short delay ensures FlatList is fully mounted before scrolling.
