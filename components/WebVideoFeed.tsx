@@ -70,9 +70,10 @@ type FilterType = 'All' | 'Trips' | 'Lodging' | 'Entertainment';
 type WebVideoFeedProps = {
   filter?: FilterType;
   initialVideoId?: string;
+  feedActive?: boolean; // NEW
 };
 
-export default function WebVideoFeed({ filter = 'All', initialVideoId }: WebVideoFeedProps) {
+export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActive = true }: WebVideoFeedProps) {
   const { height } = useWindowDimensions();
 
   /**
@@ -84,20 +85,6 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId }: WebVide
       : MOCK_DATA.filter((item) => item.category === filter)),
     [filter]
   );
-
-  useEffect(() => {
-    if (!initialVideoId) return;
-
-    const index = filteredData.findIndex((v) => v.id === initialVideoId);
-    if (index === -1) return;
-
-    // Scroll to the correct "page" and start playing it
-    setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ y: height * index, animated: false });
-      playIndex(index);
-    }, 50);
-  }, [initialVideoId, filteredData, height]);
-
 
   /**
    * Index of the video that is currently visible / playing
@@ -126,19 +113,54 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId }: WebVide
   const playIndex = (index: number) => {
     videoRefs.current.forEach((videoEl, idx) => {
       if (!videoEl) return;
+
       if (idx === index) {
-        videoEl
-          .play()
-          .catch(() => {
-            // Autoplay may be blocked on some browsers (especially Safari)
-          });
+        // ✅ Always restart when this becomes the active video
+        try {
+          videoEl.currentTime = 0;
+        } catch {}
+
+        videoEl.play().catch(() => {
+          // Autoplay may be blocked on some browsers (especially Safari)
+        });
       } else {
         videoEl.pause();
+
+        // ✅ Optional but recommended: ensure next time it starts from 0
+        try {
+          videoEl.currentTime = 0;
+        } catch {}
       }
     });
 
     setActiveIndex(index);
   };
+
+  useEffect(() => {
+    if (!feedActive) {
+      // Pause everything when user leaves Home tab
+      videoRefs.current.forEach((v) => v?.pause());
+      return;
+    }
+
+    // When coming back, resume the current activeIndex
+    if (filteredData.length > 0) {
+      playIndex(activeIndex);
+    }
+  }, [feedActive, activeIndex, filteredData.length]);
+
+  useEffect(() => {
+    if (!initialVideoId) return;
+
+    const index = filteredData.findIndex((v) => v.id === initialVideoId);
+    if (index === -1) return;
+
+    // Scroll to the correct "page" and start playing it
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: height * index, animated: false });
+      playIndex(index);
+    }, 50);
+  }, [initialVideoId, filteredData, height]);
 
   /**
    * Handle scroll events on Web (since we don’t have momentum events).
@@ -172,13 +194,18 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId }: WebVide
    *   - Pause all videos
    */
   useEffect(() => {
-    if (filteredData.length > 0) playIndex(0);
+    if (!feedActive) return;
+
+    if (filteredData.length > 0) {
+      // ✅ If we already scrolled to another video, resume that one (not the first)
+      playIndex(Math.min(activeIndex, filteredData.length - 1));
+    }
 
     return () => {
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
       videoRefs.current.forEach((v) => v?.pause());
     };
-  }, [filteredData.length]);
+  }, [filteredData.length, feedActive, activeIndex]);
 
   /**
    * Called when user taps on the video → toggles play/pause

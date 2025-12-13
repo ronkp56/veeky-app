@@ -36,7 +36,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import VideoFeed from '../components/VideoFeed';
 
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 
@@ -46,7 +46,11 @@ type FilterType = 'All' | 'Trips' | 'Lodging' | 'Entertainment';
  * On web, we load WebVideoFeed dynamically so native builds do not bundle it.
  * This avoids errors since WebVideoFeed uses HTML <video>.
  */
-let WebVideoFeed: React.ComponentType<{ filter?: FilterType; initialVideoId?: string }> | null = null;
+let WebVideoFeed: React.ComponentType<{
+  filter?: FilterType;
+  initialVideoId?: string;
+  feedActive?: boolean;
+}> | null = null;
 
 if (Platform.OS === 'web') {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -61,6 +65,9 @@ type FilterItem = {
 
 export default function HomeFeedScreen({ route }: any) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  const isFocused = useIsFocused();
+  const feedActive = isFocused;
 
   // Selected category filter
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('All');
@@ -138,9 +145,9 @@ export default function HomeFeedScreen({ route }: any) {
          ----------------------------------------------------------- */}
       <View style={{ flex: 1 }}>
         {isWeb && WebVideoFeed ? (
-          <WebVideoFeed filter={selectedFilter} initialVideoId={videoId} />
+          <WebVideoFeed filter={selectedFilter} initialVideoId={videoId} feedActive={feedActive} />
         ) : (
-          <VideoFeed filter={selectedFilter} initialVideoId={videoId} />
+          <VideoFeed filter={selectedFilter} initialVideoId={videoId} feedActive={feedActive} />
         )}
       </View>
     </View>

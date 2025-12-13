@@ -46,6 +46,7 @@ import VideoItem from './VideoItem';
 type VideoFeedProps = {
   filter?: 'All' | 'Trips' | 'Lodging' | 'Entertainment';
   initialVideoId?: string; // Video to auto-scroll to (for deep links or navigation)
+  feedActive?: boolean;    // NEW: false when user leaves Home tab
 };
 
 /**
@@ -191,7 +192,8 @@ export const MOCK_DATA: VideoData[] = [
  */
 export default function VideoFeed({
   filter = 'All',
-  initialVideoId
+  initialVideoId,
+  feedActive = true
 }: VideoFeedProps) {
   // Screen height — used to create "1 video per page"
   const { height } = useWindowDimensions();
@@ -201,6 +203,8 @@ export default function VideoFeed({
 
   // Index of the currently visible video
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const lastActiveIndexRef = useRef(0);
 
   /**
    * Compute filtered data based on category.
@@ -219,6 +223,8 @@ export default function VideoFeed({
    * Example: navigating from influencer profile to video feed.
    */
   useEffect(() => {
+    if (!feedActive) return; // if Home isn't active, don't autoplay/scroll
+
     if (initialVideoId && flatListRef.current) {
       const index = filteredData.findIndex((item) => item.id === initialVideoId);
 
@@ -226,11 +232,25 @@ export default function VideoFeed({
         // Short delay ensures FlatList is fully mounted before scrolling.
         setTimeout(() => {
           flatListRef.current?.scrollToIndex({ index, animated: false });
-          setActiveIndex(index); // Ensure correct video plays
+          setActiveIndex(index);
+          lastActiveIndexRef.current = index;
         }, 300);
       }
     }
-  }, [initialVideoId]);
+  }, [initialVideoId, filteredData, feedActive]);
+
+  // pause/resume when leaving/returning to Home tab ✅ PUT THIS DIRECTLY UNDER (A)
+  useEffect(() => {
+    if (!feedActive) {
+      setActiveIndex(-1);
+      return;
+    }
+
+    setActiveIndex((prev) => {
+      if (prev >= 0) return prev;
+      return lastActiveIndexRef.current ?? 0;
+    });
+  }, [feedActive]);
 
   /**
    * Called whenever the scroll movement finishes.
@@ -245,6 +265,7 @@ export default function VideoFeed({
     const pageIndex = Math.round(contentOffset.y / height);
 
     setActiveIndex(pageIndex);
+    if (pageIndex >= 0) lastActiveIndexRef.current = pageIndex;
   };
 
   return (
@@ -265,7 +286,7 @@ export default function VideoFeed({
       renderItem={({ item, index }) => (
         <VideoItem
           video={item}
-          isActive={index === activeIndex} // autoplay logic handled inside VideoItem
+          isActive={feedActive && index === activeIndex} // ✅ stops playback when Home tab not focused
         />
       )}
 

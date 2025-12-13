@@ -46,6 +46,7 @@ import {
   Animated,
   Platform,
   ScrollView,
+  AppState,
 } from 'react-native';
 
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -129,22 +130,35 @@ export default function VideoItem({ video, isActive }: Props) {
    * --------------------------------------------------------------------- */
 
   useEffect(() => {
+    const resetToStartNative = () => {
+      try {
+        const anyPlayer = player as any;
+        if (typeof anyPlayer.seekTo === 'function') anyPlayer.seekTo(0);
+        else if (typeof anyPlayer.setPositionAsync === 'function') anyPlayer.setPositionAsync(0);
+        else if ('currentTime' in anyPlayer) anyPlayer.currentTime = 0;
+      } catch {}
+    };
+
     if (Platform.OS === 'web') {
       const el = videoRef.current;
       if (!el) return;
 
       if (isActive) {
+        el.currentTime = 0; // restart when it becomes active
         el.play().then(() => setIsPlaying(true)).catch(() => {});
       } else {
         el.pause();
+        el.currentTime = 0; // ensure next time starts from beginning
         setIsPlaying(false);
       }
     } else {
       if (isActive) {
+        resetToStartNative(); // restart when it becomes active
         player.play();
         setIsPlaying(true);
       } else {
         player.pause();
+        resetToStartNative(); // ensure next time starts from beginning
         setIsPlaying(false);
       }
     }
@@ -164,6 +178,20 @@ export default function VideoItem({ video, isActive }: Props) {
         } catch {}
       }
     };
+  }, [player]);
+
+
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') {
+        try { player.pause(); } catch {}
+        setIsPlaying(false);
+      }
+    });
+
+    return () => sub.remove();
   }, [player]);
 
   /* --------------------------------------------------------------------- *
