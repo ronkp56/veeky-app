@@ -38,8 +38,12 @@ import {
   FlatList,
   useWindowDimensions,
   NativeScrollEvent,
-  NativeSyntheticEvent
+  NativeSyntheticEvent,
+  TouchableOpacity,
+  StyleSheet,
+  View
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import VideoItem from './VideoItem';
 
@@ -201,6 +205,8 @@ export default function VideoFeed({
 }: VideoFeedProps) {
   // Screen height — used to create "1 video per page"
   const { height } = useWindowDimensions();
+  
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   // Reference to the FlatList (so we can scroll programmatically)
   const flatListRef = useRef<FlatList<VideoData>>(null);
@@ -316,6 +322,17 @@ export default function VideoFeed({
     flatListRef.current?.scrollToIndex({ index: idx, animated: false });
   };
 
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = e.nativeEvent.contentOffset.y;
+    setShowScrollTop(offsetY > height * 2);
+  };
+
+  const scrollToTop = () => {
+    flatListRef.current?.scrollToIndex({ index: 0, animated: true });
+    setActiveIndex(0);
+    lastActiveIndexRef.current = 0;
+  };
+
   const feedActiveRef = useRef(feedActive);
   const activeIndexRef = useRef(activeIndex);
 
@@ -345,7 +362,8 @@ export default function VideoFeed({
   );
 
   return (
-    <FlatList
+    <>
+      <FlatList
       ref={flatListRef}
       data={filteredData}
       keyExtractor={(item) => item.id}
@@ -357,6 +375,8 @@ export default function VideoFeed({
       disableIntervalMomentum
       refreshing={refreshing}
       onRefresh={onRefresh}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
 
       /**
        * Render each video item.
@@ -377,6 +397,36 @@ export default function VideoFeed({
       onScrollBeginDrag={onBeginDrag}
       onScrollEndDrag={onEndDrag}
       onMomentumScrollEnd={onMomentumEnd}
-    />
+      />
+
+      {showScrollTop && (
+        <TouchableOpacity
+          style={styles.scrollTopBtn}
+          onPress={scrollToTop}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="arrow-up" size={24} color="#000" />
+        </TouchableOpacity>
+      )}
+    </>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollTopBtn: {
+    position: 'absolute',
+    top: 60,
+    right: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#00D5FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+});

@@ -156,15 +156,6 @@ const VideoItem = React.memo(
    * --------------------------------------------------------------------- */
 
   useEffect(() => {
-    const resetToStartNative = () => {
-      try {
-        const anyPlayer = player as any;
-        if (typeof anyPlayer.seekTo === 'function') anyPlayer.seekTo(0);
-        else if (typeof anyPlayer.setPositionAsync === 'function') anyPlayer.setPositionAsync(0);
-        else if ('currentTime' in anyPlayer) anyPlayer.currentTime = 0;
-      } catch {}
-    };
-
     if (Platform.OS === 'web') {
       const el = videoRef.current;
       if (!el) return;
@@ -189,11 +180,9 @@ const VideoItem = React.memo(
       el.addEventListener('timeupdate', handleTimeUpdate);
 
       if (isActive) {
-        el.currentTime = 0;
         el.play().then(() => setIsPlaying(true)).catch(() => setError(true));
       } else {
         el.pause();
-        el.currentTime = 0;
         setIsPlaying(false);
       }
 
@@ -206,12 +195,10 @@ const VideoItem = React.memo(
     } else {
       if (isActive) {
         setLoading(false);
-        resetToStartNative();
         player.play();
         setIsPlaying(true);
       } else {
         player.pause();
-        resetToStartNative();
         setIsPlaying(false);
       }
     }
@@ -299,7 +286,7 @@ const VideoItem = React.memo(
     if (!isActive) return;
 
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
+    const DOUBLE_TAP_DELAY = 250;
 
     if (now - lastTap.current < DOUBLE_TAP_DELAY) {
       // Double tap detected
@@ -310,36 +297,32 @@ const VideoItem = React.memo(
 
     lastTap.current = now;
 
-    // Single tap - toggle play/pause after delay
-    setTimeout(() => {
-      if (Date.now() - lastTap.current >= DOUBLE_TAP_DELAY) {
-        if (Platform.OS === 'web') {
-          const el = videoRef.current;
-          if (!el) return;
+    // Single tap - immediate toggle
+    if (Platform.OS === 'web') {
+      const el = videoRef.current;
+      if (!el) return;
 
-          if (isPlaying) {
-            el.pause();
-            setIsPlaying(false);
-            showTapIcon('pause');
-          } else {
-            el.play().then(() => {
-              setIsPlaying(true);
-              showTapIcon('play');
-            });
-          }
-        } else {
-          if (isPlaying) {
-            player.pause();
-            setIsPlaying(false);
-            showTapIcon('pause');
-          } else {
-            player.play();
-            setIsPlaying(true);
-            showTapIcon('play');
-          }
-        }
+      if (isPlaying) {
+        el.pause();
+        setIsPlaying(false);
+        showTapIcon('pause');
+      } else {
+        el.play().then(() => {
+          setIsPlaying(true);
+          showTapIcon('play');
+        });
       }
-    }, DOUBLE_TAP_DELAY);
+    } else {
+      if (isPlaying) {
+        player.pause();
+        setIsPlaying(false);
+        showTapIcon('pause');
+      } else {
+        player.play();
+        setIsPlaying(true);
+        showTapIcon('play');
+      }
+    }
   }, [isActive, isPlaying, player, showTapIcon, videoRef, handleDoubleTap]);
 
   /* --------------------------------------------------------------------- *
@@ -376,7 +359,16 @@ const VideoItem = React.memo(
     }
   }, [video.title, video.location]);
   const handleBook = React.useCallback(() => {}, []);
-  const handleDetails = React.useCallback(() => setItineraryVisible(true), []);
+  const handleDetails = React.useCallback(() => {
+    setItineraryVisible(true);
+    // Pause video when opening details
+    if (Platform.OS === 'web') {
+      videoRef.current?.pause();
+    } else {
+      player.pause();
+    }
+    setIsPlaying(false);
+  }, [player]);
   const handleInfluencer = React.useCallback(() => {
     navigation.navigate('Influencer', { influencerId: video.influencer.id });
   }, [navigation, video.influencer.id]);
@@ -459,13 +451,13 @@ const VideoItem = React.memo(
       )}
 
       {/* VIDEO PROGRESS BAR */}
-      {isActive && duration > 0 && (
+      {isActive && !loading && !error && (
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
             <View
               style={[
                 styles.progressFill,
-                { width: `${(progress / duration) * 100}%` },
+                { width: duration > 0 ? `${(progress / duration) * 100}%` : '0%' },
               ]}
             />
           </View>
@@ -531,7 +523,18 @@ const VideoItem = React.memo(
       <ItineraryModal
         visible={itineraryVisible}
         video={video}
-        onClose={() => setItineraryVisible(false)}
+        onClose={() => {
+          setItineraryVisible(false);
+          // Resume video when closing details if active
+          if (isActive) {
+            if (Platform.OS === 'web') {
+              videoRef.current?.play();
+            } else {
+              player.play();
+            }
+            setIsPlaying(true);
+          }
+        }}
       />
     </View>
   );

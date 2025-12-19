@@ -55,7 +55,7 @@ export default function ItineraryModal({ visible, video, onClose }: Props) {
         />
 
         {/* Main modal body */}
-        <View style={styles.content}>
+        <View style={styles.content} onStartShouldSetResponder={() => true}>
 
           {/* Header section */}
           <View style={styles.header}>
