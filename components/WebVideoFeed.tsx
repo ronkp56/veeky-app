@@ -115,21 +115,10 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
       if (!videoEl) return;
 
       if (idx === index) {
-        // ✅ Always restart when this becomes the active video
-        try {
-          videoEl.currentTime = 0;
-        } catch {}
-
-        videoEl.play().catch(() => {
-          // Autoplay may be blocked on some browsers (especially Safari)
-        });
+        // Play from current position (don't restart)
+        videoEl.play().catch(() => {});
       } else {
         videoEl.pause();
-
-        // ✅ Optional but recommended: ensure next time it starts from 0
-        try {
-          videoEl.currentTime = 0;
-        } catch {}
       }
     });
 
@@ -310,6 +299,16 @@ function WebVideoItem({
   // Center tap feedback (UI only)
   const [tapIcon, setTapIcon] = useState<'play' | 'pause' | null>(null);
   const tapIconAnim = useRef(new Animated.Value(0)).current;
+  
+  // Double tap to like
+  const [likeIcon, setLikeIcon] = useState(false);
+  const likeIconAnim = useRef(new Animated.Value(0)).current;
+  const lastTap = useRef<number>(0);
+  
+  // Progress bar
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   // Like / save / comments UI state
   const [isLiked, setIsLiked] = useState(storage.isLiked(video.id));
@@ -335,10 +334,45 @@ function WebVideoItem({
     }).start(() => setTapIcon(null));
   };
 
+  const showLikeAnimation = () => {
+    setLikeIcon(true);
+    likeIconAnim.setValue(0);
+
+    Animated.sequence([
+      Animated.spring(likeIconAnim, {
+        toValue: 1,
+        friction: 3,
+        useNativeDriver: true,
+      }),
+      Animated.timing(likeIconAnim, {
+        toValue: 0,
+        duration: 300,
+        delay: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setLikeIcon(false));
+  };
+
   /**
-   * User taps on video → toggle play/pause
+   * User taps on video → toggle play/pause OR double tap to like
    */
   const handlePress = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+
+    if (now - lastTap.current < DOUBLE_TAP_DELAY) {
+      // Double tap - like
+      lastTap.current = 0;
+      if (!isLiked) {
+        const liked = storage.toggleLike(video.id);
+        setIsLiked(liked);
+        setLikesCount((prev) => prev + 1);
+        showLikeAnimation();
+      }
+      return;
+    }
+
+    lastTap.current = now;
     const action = onToggle(index);
     showTapIcon(action);
   };
@@ -374,16 +408,49 @@ function WebVideoItem({
     navigation.navigate('Search', { query: tag, mode: 'tags' });
   };
 
+  const handleDetails = () => {
+    setItineraryVisible(true);
+    // Pause video when opening modal
+    if (videoRef.current) {
+      videoRef.current.pause();
+    }
+  };
+
+  const handleCloseItinerary = () => {
+    setItineraryVisible(false);
+    // Resume video when closing modal
+    if (videoRef.current) {
+      videoRef.current.play();
+    }
+  };
+
+  // Track progress
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+
+    const handleTimeUpdate = () => {
+      setProgress(el.currentTime);
+      setDuration(el.duration || 0);
+    };
+
+    el.addEventListener('timeupdate', handleTimeUpdate);
+    return () => el.removeEventListener('timeupdate', handleTimeUpdate);
+  }, []);
+
   return (
     <View style={[styles.itemContainer, { height }]}>
       <View style={styles.videoWrapper}>
         {/* RAW HTML5 VIDEO ELEMENT */}
         <video
-          ref={provideRef}
+          ref={(el) => {
+            provideRef(el);
+            videoRef.current = el;
+          }}
           src={video.uri}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           playsInline
-          muted = {false}
+          muted={false}
           loop
         />
 
@@ -402,6 +469,43 @@ function WebVideoItem({
               color="#fff"
             />
           </Animated.View>
+        )}
+
+        {/* Double tap like animation */}
+        {likeIcon && (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.centerIconContainer,
+              {
+                opacity: likeIconAnim,
+                transform: [
+                  {
+                    scale: likeIconAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.5, 1.2],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <Ionicons name="heart" size={120} color="#FF3B5C" />
+          </Animated.View>
+        )}
+
+        {/* Progress bar */}
+        {duration > 0 && (
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${(progress / duration) * 100}%` },
+                ]}
+              />
+            </View>
+          </View>
         )}
 
         {/* RIGHT ACTION BUTTONS */}
@@ -477,7 +581,7 @@ function WebVideoItem({
           <View style={styles.buttons}>
             <TouchableOpacity
               style={styles.detailsBtn}
-              onPress={() => setItineraryVisible(true)}
+              onPress={handleDetails}
             >
               <Text style={styles.detailsBtnText}>פרטים</Text>
             </TouchableOpacity>
@@ -500,7 +604,7 @@ function WebVideoItem({
       <ItineraryModal
         visible={itineraryVisible}
         video={video}
-        onClose={() => setItineraryVisible(false)}
+        onClose={handleCloseItinerary}
       />
     </View>
   );
@@ -655,5 +759,21 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 15,
     fontWeight: '700',
+  },
+  progressContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  progressBar: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#00D5FF',
   },
 });
