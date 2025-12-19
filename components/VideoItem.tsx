@@ -286,10 +286,10 @@ const VideoItem = React.memo(
     if (!isActive) return;
 
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 250;
+    const DOUBLE_TAP_DELAY = 300;
 
     if (now - lastTap.current < DOUBLE_TAP_DELAY) {
-      // Double tap detected
+      // Double tap detected - like
       lastTap.current = 0;
       handleDoubleTap();
       return;
@@ -297,7 +297,7 @@ const VideoItem = React.memo(
 
     lastTap.current = now;
 
-    // Single tap - immediate toggle
+    // Single tap - toggle play/pause
     if (Platform.OS === 'web') {
       const el = videoRef.current;
       if (!el) return;
@@ -310,7 +310,7 @@ const VideoItem = React.memo(
         el.play().then(() => {
           setIsPlaying(true);
           showTapIcon('play');
-        });
+        }).catch(() => {});
       }
     } else {
       if (isPlaying) {
@@ -323,7 +323,7 @@ const VideoItem = React.memo(
         showTapIcon('play');
       }
     }
-  }, [isActive, isPlaying, player, showTapIcon, videoRef, handleDoubleTap]);
+  }, [isActive, isPlaying, player, showTapIcon, handleDoubleTap]);
 
   /* --------------------------------------------------------------------- *
    *                TAG PRESS (opens Search screen)
