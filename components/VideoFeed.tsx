@@ -206,6 +206,13 @@ export default function VideoFeed({
 
   const lastActiveIndexRef = useRef(0);
 
+  // Shorts-like "one gesture = one step" locking
+  const dragStartYRef = useRef(0);
+  const dragStartIndexRef = useRef(0);
+  const snappingRef = useRef(false);
+
+  const clampIndex = (idx: number, max: number) => Math.max(0, Math.min(max, idx));
+
   /**
    * Compute filtered data based on category.
    * useMemo ensures we don't recompute on every render.
@@ -256,16 +263,53 @@ export default function VideoFeed({
    * Called whenever the scroll movement finishes.
    * Calculates which "page" (video index) is currently visible.
    */
-  const handleScrollEnd = (
-    event: NativeSyntheticEvent<NativeScrollEvent>
-  ) => {
-    const { contentOffset } = event.nativeEvent;
+  const onBeginDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!feedActive) return;
 
-    // Compute page index by dividing scroll offset by screen height
-    const pageIndex = Math.round(contentOffset.y / height);
+    snappingRef.current = false;
+    dragStartYRef.current = e.nativeEvent.contentOffset.y;
+    dragStartIndexRef.current = lastActiveIndexRef.current;
+  };
 
-    setActiveIndex(pageIndex);
-    if (pageIndex >= 0) lastActiveIndexRef.current = pageIndex;
+  const onEndDrag = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!feedActive) return;
+
+    const maxIndex = filteredData.length - 1;
+    const startIndex = dragStartIndexRef.current;
+
+    const endY = e.nativeEvent.contentOffset.y;
+    const deltaY = endY - dragStartYRef.current;
+
+    // How far user must drag to count as "next/prev"
+    const threshold = height * 0.12;
+
+    let nextIndex = startIndex;
+
+    if (deltaY > threshold) nextIndex = startIndex + 1;       // swipe up -> next video
+    else if (deltaY < -threshold) nextIndex = startIndex - 1; // swipe down -> previous video
+
+    nextIndex = clampIndex(nextIndex, maxIndex);
+
+    // Hard-lock to that single step immediately
+    snappingRef.current = true;
+    lastActiveIndexRef.current = nextIndex;
+    setActiveIndex(nextIndex);
+
+    flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+
+    // release shortly after the snap begins
+    setTimeout(() => {
+      snappingRef.current = false;
+    }, 250);
+  };
+
+  const onMomentumEnd = () => {
+    // After everything settles, ensure we are exactly at our locked index
+    if (!feedActive) return;
+    if (snappingRef.current) return;
+
+    const idx = clampIndex(lastActiveIndexRef.current, filteredData.length - 1);
+    flatListRef.current?.scrollToIndex({ index: idx, animated: false });
   };
 
   return (
@@ -274,10 +318,11 @@ export default function VideoFeed({
       data={filteredData}
       keyExtractor={(item) => item.id}
       showsVerticalScrollIndicator={false}
-      pagingEnabled // snap one full screen per swipe
+      pagingEnabled={false} // snap one full screen per swipe
       snapToInterval={height} // ensures each video takes full height
       snapToAlignment="start"
       decelerationRate="fast" // makes swipe transitions snappy
+      disableIntervalMomentum
 
       /**
        * Render each video item.
@@ -304,8 +349,9 @@ export default function VideoFeed({
        * - iOS: uses momentum
        * - Android/Web: may use drag end
        */
-      onMomentumScrollEnd={handleScrollEnd}
-      onScrollEndDrag={handleScrollEnd}
+      onScrollBeginDrag={onBeginDrag}
+      onScrollEndDrag={onEndDrag}
+      onMomentumScrollEnd={onMomentumEnd}
     />
   );
 }

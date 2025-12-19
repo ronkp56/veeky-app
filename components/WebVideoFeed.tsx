@@ -48,8 +48,7 @@ import {
   Animated,
   Text,
   useWindowDimensions,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
+  Platform,
   TouchableOpacity,
 } from 'react-native';
 
@@ -91,21 +90,22 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
    */
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Keep current index as a ref so wheel/touch handlers never use stale state
+  const activeIndexRef = useRef(0);
+
   /**
    * Hold refs to all <video> HTML elements
    * (One ref per video item)
    */
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
-  /* Add a scrollViewRef and a useEffect to jump */
   const scrollViewRef = useRef<ScrollView>(null);
 
-  /**
-   * Used to detect scroll end on Web.
-   * We store the Y position and wait for the user to stop scrolling.
-   */
-  const scrollY = useRef(0);
-  const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Gesture control (Shorts-like: one gesture = one step)
+  const touchStartYRef = useRef<number | null>(null);
+  const wheelLockRef = useRef(false);
+
+  const clampIndex = (idx: number, max: number) => Math.max(0, Math.min(max, idx));
 
   /**
    * Play only the video at index, pause all others
@@ -134,6 +134,15 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
     });
 
     setActiveIndex(index);
+    activeIndexRef.current = index;
+  };
+
+  const goToIndex = (index: number, animated = true) => {
+    const maxIndex = filteredData.length - 1;
+    const next = clampIndex(index, maxIndex);
+
+    scrollViewRef.current?.scrollTo({ y: height * next, animated });
+    playIndex(next);
   };
 
   useEffect(() => {
@@ -155,36 +164,10 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
     const index = filteredData.findIndex((v) => v.id === initialVideoId);
     if (index === -1) return;
 
-    // Scroll to the correct "page" and start playing it
     setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ y: height * index, animated: false });
-      playIndex(index);
+      goToIndex(index, false);
     }, 50);
   }, [initialVideoId, filteredData, height]);
-
-  /**
-   * Handle scroll events on Web (since we don’t have momentum events).
-   * Approach:
-   *   - On scroll: store new Y position
-   *   - Clear any existing timer
-   *   - Start a new timer: if user stops scrolling for 120ms,
-   *     we consider it a “scroll end” → compute page index
-   */
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { contentOffset } = event.nativeEvent;
-    scrollY.current = contentOffset.y;
-
-    // Reset scroll timer
-    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-
-    scrollTimeout.current = setTimeout(() => {
-      const pageIndex = Math.round(scrollY.current / height);
-
-      if (pageIndex >= 0 && pageIndex < filteredData.length) {
-        playIndex(pageIndex);
-      }
-    }, 120);
-  };
 
   /**
    * On mount:
@@ -202,7 +185,6 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
     }
 
     return () => {
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
       videoRefs.current.forEach((v) => v?.pause());
     };
   }, [filteredData.length, feedActive, activeIndex]);
@@ -224,30 +206,82 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Shorts-like web paging: one wheel/touch gesture = one step
+  // ---------------------------------------------------------------------------
+  const handleWheel = (e: any) => {
+
+    if (!feedActive) return;
+    if (wheelLockRef.current) return;
+
+    wheelLockRef.current = true;
+
+    const deltaY = e?.nativeEvent?.deltaY ?? e?.deltaY ?? 0;
+    const dir = deltaY > 0 ? 1 : -1;
+
+    goToIndex(activeIndexRef.current + dir, true);
+
+    // Lock long enough to avoid multiple steps from one wheel fling
+    setTimeout(() => {
+      wheelLockRef.current = false;
+    }, 320);
+  };
+
+  const handleTouchStart = (e: any) => {
+    if (!feedActive) return;
+    const y = e?.nativeEvent?.pageY ?? e?.touches?.[0]?.pageY ?? null;
+    touchStartYRef.current = typeof y === 'number' ? y : null;
+  };
+
+  const handleTouchEnd = (e: any) => {
+    if (!feedActive) return;
+
+    const startY = touchStartYRef.current;
+    touchStartYRef.current = null;
+    if (typeof startY !== 'number') return;
+
+    const endY = e?.nativeEvent?.pageY ?? e?.changedTouches?.[0]?.pageY ?? null;
+    if (typeof endY !== 'number') return;
+
+    const delta = endY - startY;
+    const threshold = 40;
+
+    if (delta <= -threshold) goToIndex(activeIndexRef.current + 1, true); // swipe up => next
+    else if (delta >= threshold) goToIndex(activeIndexRef.current - 1, true); // swipe down => prev
+    else goToIndex(activeIndexRef.current, true); // snap back
+  };
+
   /**
    * Main render: Each child is a <WebVideoItem/> component
    */
+  const WheelView: any = View;
+
   return (
-    <ScrollView
-      pagingEnabled
-      snapToInterval={height}
-      snapToAlignment="start"
-      showsVerticalScrollIndicator={false}
-      scrollEventThrottle={16}
-      onScroll={handleScroll}
-      ref={scrollViewRef}
+    <WheelView
+      style={{ flex: 1 }}
+      {...(Platform.OS === 'web' ? { onWheel: handleWheel } : {})}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
-      {filteredData.map((video, index) => (
-        <WebVideoItem
-          key={video.id}
-          video={video}
-          index={index}
-          height={height}
-          provideRef={(el) => (videoRefs.current[index] = el)}
-          onToggle={handleToggleFromItem}
-        />
-      ))}
-    </ScrollView>
+      <ScrollView
+        ref={scrollViewRef}
+        scrollEnabled={false} // ✅ critical: disable native momentum scrolling
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ height: height * filteredData.length }}
+      >
+        {filteredData.map((video, index) => (
+          <WebVideoItem
+            key={video.id}
+            video={video}
+            index={index}
+            height={height}
+            provideRef={(el) => (videoRefs.current[index] = el)}
+            onToggle={handleToggleFromItem}
+          />
+        ))}
+      </ScrollView>
+    </WheelView>
   );
 }
 
@@ -349,7 +383,7 @@ function WebVideoItem({
           src={video.uri}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           playsInline
-          muted={false}
+          muted
           loop
         />
 
