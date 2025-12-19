@@ -312,6 +312,34 @@ export default function VideoFeed({
     flatListRef.current?.scrollToIndex({ index: idx, animated: false });
   };
 
+  const feedActiveRef = useRef(feedActive);
+  const activeIndexRef = useRef(activeIndex);
+
+  // Update refs synchronously during render to avoid stale values
+  feedActiveRef.current = feedActive;
+  activeIndexRef.current = activeIndex;
+
+  // Empty deps array is safe here because refs are used to access current values
+  // This prevents renderItem recreation on every scroll while maintaining correct isActive values
+  const renderItem = React.useCallback(
+    ({ item, index }: { item: VideoData; index: number }) => (
+      <VideoItem
+        video={item}
+        isActive={feedActiveRef.current && index === activeIndexRef.current}
+      />
+    ),
+    []
+  );
+
+  const getItemLayout = React.useCallback(
+    (_data: ArrayLike<VideoData> | null | undefined, index: number) => ({
+      length: height,
+      offset: height * index,
+      index
+    }),
+    [height]
+  );
+
   return (
     <FlatList
       ref={flatListRef}
@@ -328,21 +356,12 @@ export default function VideoFeed({
        * Render each video item.
        * Pass isActive so only the current video plays.
        */
-      renderItem={({ item, index }) => (
-        <VideoItem
-          video={item}
-          isActive={feedActive && index === activeIndex} // ✅ stops playback when Home tab not focused
-        />
-      )}
+      renderItem={renderItem}
 
       /**
        * Improves performance: allows FlatList to jump directly to an item.
        */
-      getItemLayout={(_, index) => ({
-        length: height,
-        offset: height * index,
-        index
-      })}
+      getItemLayout={getItemLayout}
 
       /**
        * Scroll event handlers:

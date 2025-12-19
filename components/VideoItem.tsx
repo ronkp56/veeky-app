@@ -68,7 +68,8 @@ type Props = {
   isActive: boolean; // Determines whether to auto-play this video
 };
 
-export default function VideoItem({ video, isActive }: Props) {
+const VideoItem = React.memo(
+  ({ video, isActive }: Props) => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -96,7 +97,7 @@ export default function VideoItem({ video, isActive }: Props) {
   const [tapIcon, setTapIcon] = useState<'play' | 'pause' | null>(null);
   const tapIconAnim = useRef(new Animated.Value(0)).current;
 
-  const showTapIcon = (type: 'play' | 'pause') => {
+  const showTapIcon = React.useCallback((type: 'play' | 'pause') => {
     setTapIcon(type);
     tapIconAnim.setValue(1);
 
@@ -106,7 +107,7 @@ export default function VideoItem({ video, isActive }: Props) {
       duration: 500,
       useNativeDriver: true,
     }).start(() => setTapIcon(null));
-  };
+  }, [tapIconAnim]);
 
   /* --------------------------------------------------------------------- *
    *                UI STATE (like, save, comments, itinerary)
@@ -198,29 +199,29 @@ export default function VideoItem({ video, isActive }: Props) {
    *                BUTTON HANDLERS (like, save, comments)
    * --------------------------------------------------------------------- */
 
-  const handleLike = () => {
+  const handleLike = React.useCallback(() => {
     const liked = storage.toggleLike(video.id);
     setIsLiked(liked);
     setLikesCount((prev) => (liked ? prev + 1 : prev - 1));
-  };
+  }, [video.id]);
 
-  const handleSave = () => {
+  const handleSave = React.useCallback(() => {
     const saved = storage.toggleSave(video.id);
     setIsSaved(saved);
-  };
+  }, [video.id]);
 
-  const handleComments = () => setCommentsVisible(true);
+  const handleComments = React.useCallback(() => setCommentsVisible(true), []);
 
-  const handleCloseComments = () => {
+  const handleCloseComments = React.useCallback(() => {
     setCommentsVisible(false);
     setCommentsCount(storage.getComments(video.id).length);
-  };
+  }, [video.id]);
 
   /* --------------------------------------------------------------------- *
    *                TAP-TO-PLAY / TAP-TO-PAUSE BEHAVIOR
    * --------------------------------------------------------------------- */
 
-  const handleTogglePlay = () => {
+  const handleTogglePlay = React.useCallback(() => {
     if (!isActive) return;
 
     if (Platform.OS === 'web') {
@@ -248,16 +249,23 @@ export default function VideoItem({ video, isActive }: Props) {
         showTapIcon('play');
       }
     }
-  };
+  }, [isActive, isPlaying, player, showTapIcon, videoRef]);
 
   /* --------------------------------------------------------------------- *
    *                TAG PRESS (opens Search screen)
    * --------------------------------------------------------------------- */
 
-  const handleTagPress = (tag: string) => {
+  const handleTagPress = React.useCallback((tag: string) => {
     // Navigate to Search with a pre-filled query and "tags" mode
     navigation.navigate('Search', { query: tag, mode: 'tags' });
-  };
+  }, [navigation]);
+
+  const handleShare = React.useCallback(() => {}, []);
+  const handleBook = React.useCallback(() => {}, []);
+  const handleDetails = React.useCallback(() => setItineraryVisible(true), []);
+  const handleInfluencer = React.useCallback(() => {
+    navigation.navigate('Influencer', { influencerId: video.influencer.id });
+  }, [navigation, video.influencer.id]);
 
   /* --------------------------------------------------------------------- *
    *                               RENDER
@@ -335,14 +343,10 @@ export default function VideoItem({ video, isActive }: Props) {
         onLike={handleLike}
         onSave={handleSave}
         onComment={handleComments}
-        onShare={() => {}}
-        onBook={() => {}}
-        onDetails={() => setItineraryVisible(true)}
-        onInfluencer={() =>
-          navigation.navigate('Influencer', {
-            influencerId: video.influencer.id,
-          })
-        }
+        onShare={handleShare}
+        onBook={handleBook}
+        onDetails={handleDetails}
+        onInfluencer={handleInfluencer}
         onTagPress={handleTagPress}
       />
 
@@ -361,7 +365,13 @@ export default function VideoItem({ video, isActive }: Props) {
       />
     </View>
   );
-}
+  },
+  (prevProps, nextProps) =>
+    prevProps.video === nextProps.video &&
+    prevProps.isActive === nextProps.isActive
+);
+
+export default VideoItem;
 
 /* =============================================================================
  *                           VIDEO OVERLAY (RIGHT + BOTTOM UI)
@@ -386,7 +396,7 @@ type OverlayProps = {
   onTagPress: (tag: string) => void;
 };
 
-function VideoOverlay({
+const VideoOverlay = React.memo(function VideoOverlay({
   video,
   isLiked,
   isSaved,
@@ -487,7 +497,7 @@ function VideoOverlay({
       </View>
     </View>
   );
-}
+});
 
 /* =============================================================================
  *                           HELPERS + STYLES
