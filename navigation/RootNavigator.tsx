@@ -28,7 +28,7 @@
  */
 
 import React from 'react';
-import * as Haptics from 'expo-haptics';
+import { haptics } from '../utils/haptics';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NavigatorScreenParams } from '@react-navigation/native';
@@ -148,7 +148,7 @@ function MainTabs() {
       // Listener for tab presses: triggers a light haptic feedback
       screenListeners={{
         tabPress: () => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          haptics.light();
         },
       }}
     >

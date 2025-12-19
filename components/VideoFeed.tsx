@@ -47,6 +47,8 @@ type VideoFeedProps = {
   filter?: 'All' | 'Trips' | 'Lodging' | 'Entertainment';
   initialVideoId?: string; // Video to auto-scroll to (for deep links or navigation)
   feedActive?: boolean;    // NEW: false when user leaves Home tab
+  onRefresh?: () => void;
+  refreshing?: boolean;
 };
 
 /**
@@ -193,7 +195,9 @@ export const MOCK_DATA: VideoData[] = [
 export default function VideoFeed({
   filter = 'All',
   initialVideoId,
-  feedActive = true
+  feedActive = true,
+  onRefresh,
+  refreshing = false
 }: VideoFeedProps) {
   // Screen height — used to create "1 video per page"
   const { height } = useWindowDimensions();
@@ -351,6 +355,8 @@ export default function VideoFeed({
       snapToAlignment="start"
       decelerationRate="fast" // makes swipe transitions snappy
       disableIntervalMomentum
+      refreshing={refreshing}
+      onRefresh={onRefresh}
 
       /**
        * Render each video item.

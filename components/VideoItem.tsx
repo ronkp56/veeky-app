@@ -35,7 +35,7 @@
  * This is one of the most important UI components in Veeky.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -96,6 +96,13 @@ const VideoItem = React.memo(
 
   const [tapIcon, setTapIcon] = useState<'play' | 'pause' | null>(null);
   const tapIconAnim = useRef(new Animated.Value(0)).current;
+  
+  const [likeIcon, setLikeIcon] = useState(false);
+  const likeIconAnim = useRef(new Animated.Value(0)).current;
+  const lastTap = useRef<number>(0);
+  
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   const showTapIcon = React.useCallback((type: 'play' | 'pause') => {
     setTapIcon(type);
@@ -108,6 +115,25 @@ const VideoItem = React.memo(
       useNativeDriver: true,
     }).start(() => setTapIcon(null));
   }, [tapIconAnim]);
+
+  const showLikeAnimation = useCallback(() => {
+    setLikeIcon(true);
+    likeIconAnim.setValue(0);
+
+    Animated.sequence([
+      Animated.spring(likeIconAnim, {
+        toValue: 1,
+        friction: 3,
+        useNativeDriver: true,
+      }),
+      Animated.timing(likeIconAnim, {
+        toValue: 0,
+        duration: 300,
+        delay: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setLikeIcon(false));
+  }, [likeIconAnim]);
 
   /* --------------------------------------------------------------------- *
    *                UI STATE (like, save, comments, itinerary)
@@ -122,9 +148,8 @@ const VideoItem = React.memo(
   );
   const [itineraryVisible, setItineraryVisible] = useState(false);
 
-  // Placeholder loading / error states (not implemented but kept for future)
-  const [loading] = useState(false);
-  const [error] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   /* --------------------------------------------------------------------- *
    *                AUTO PLAY / PAUSE WHEN ACTIVE CHANGES
@@ -144,22 +169,49 @@ const VideoItem = React.memo(
       const el = videoRef.current;
       if (!el) return;
 
+      const handleLoadStart = () => setLoading(true);
+      const handleCanPlay = () => {
+        setLoading(false);
+        setError(false);
+      };
+      const handleError = () => {
+        setLoading(false);
+        setError(true);
+      };
+      const handleTimeUpdate = () => {
+        setProgress(el.currentTime);
+        setDuration(el.duration || 0);
+      };
+
+      el.addEventListener('loadstart', handleLoadStart);
+      el.addEventListener('canplay', handleCanPlay);
+      el.addEventListener('error', handleError);
+      el.addEventListener('timeupdate', handleTimeUpdate);
+
       if (isActive) {
-        el.currentTime = 0; // restart when it becomes active
-        el.play().then(() => setIsPlaying(true)).catch(() => {});
+        el.currentTime = 0;
+        el.play().then(() => setIsPlaying(true)).catch(() => setError(true));
       } else {
         el.pause();
-        el.currentTime = 0; // ensure next time starts from beginning
+        el.currentTime = 0;
         setIsPlaying(false);
       }
+
+      return () => {
+        el.removeEventListener('loadstart', handleLoadStart);
+        el.removeEventListener('canplay', handleCanPlay);
+        el.removeEventListener('error', handleError);
+        el.removeEventListener('timeupdate', handleTimeUpdate);
+      };
     } else {
       if (isActive) {
-        resetToStartNative(); // restart when it becomes active
+        setLoading(false);
+        resetToStartNative();
         player.play();
         setIsPlaying(true);
       } else {
         player.pause();
-        resetToStartNative(); // ensure next time starts from beginning
+        resetToStartNative();
         setIsPlaying(false);
       }
     }
@@ -199,15 +251,25 @@ const VideoItem = React.memo(
    *                BUTTON HANDLERS (like, save, comments)
    * --------------------------------------------------------------------- */
 
-  const handleLike = React.useCallback(() => {
+  const handleLike = React.useCallback(async () => {
     const liked = storage.toggleLike(video.id);
     setIsLiked(liked);
     setLikesCount((prev) => (liked ? prev + 1 : prev - 1));
+    
+    const { haptics } = await import('../utils/haptics');
+    if (liked) {
+      haptics.success();
+    } else {
+      haptics.light();
+    }
   }, [video.id]);
 
-  const handleSave = React.useCallback(() => {
+  const handleSave = React.useCallback(async () => {
     const saved = storage.toggleSave(video.id);
     setIsSaved(saved);
+    
+    const { haptics } = await import('../utils/haptics');
+    haptics.light();
   }, [video.id]);
 
   const handleComments = React.useCallback(() => setCommentsVisible(true), []);
@@ -221,35 +283,64 @@ const VideoItem = React.memo(
    *                TAP-TO-PLAY / TAP-TO-PAUSE BEHAVIOR
    * --------------------------------------------------------------------- */
 
+  const handleDoubleTap = useCallback(async () => {
+    if (!isLiked) {
+      const liked = storage.toggleLike(video.id);
+      setIsLiked(liked);
+      setLikesCount((prev) => prev + 1);
+      showLikeAnimation();
+      
+      const { haptics } = await import('../utils/haptics');
+      haptics.success();
+    }
+  }, [isLiked, video.id, showLikeAnimation]);
+
   const handleTogglePlay = React.useCallback(() => {
     if (!isActive) return;
 
-    if (Platform.OS === 'web') {
-      const el = videoRef.current;
-      if (!el) return;
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
 
-      if (isPlaying) {
-        el.pause();
-        setIsPlaying(false);
-        showTapIcon('pause');
-      } else {
-        el.play().then(() => {
-          setIsPlaying(true);
-          showTapIcon('play');
-        });
-      }
-    } else {
-      if (isPlaying) {
-        player.pause();
-        setIsPlaying(false);
-        showTapIcon('pause');
-      } else {
-        player.play();
-        setIsPlaying(true);
-        showTapIcon('play');
-      }
+    if (now - lastTap.current < DOUBLE_TAP_DELAY) {
+      // Double tap detected
+      lastTap.current = 0;
+      handleDoubleTap();
+      return;
     }
-  }, [isActive, isPlaying, player, showTapIcon, videoRef]);
+
+    lastTap.current = now;
+
+    // Single tap - toggle play/pause after delay
+    setTimeout(() => {
+      if (Date.now() - lastTap.current >= DOUBLE_TAP_DELAY) {
+        if (Platform.OS === 'web') {
+          const el = videoRef.current;
+          if (!el) return;
+
+          if (isPlaying) {
+            el.pause();
+            setIsPlaying(false);
+            showTapIcon('pause');
+          } else {
+            el.play().then(() => {
+              setIsPlaying(true);
+              showTapIcon('play');
+            });
+          }
+        } else {
+          if (isPlaying) {
+            player.pause();
+            setIsPlaying(false);
+            showTapIcon('pause');
+          } else {
+            player.play();
+            setIsPlaying(true);
+            showTapIcon('play');
+          }
+        }
+      }
+    }, DOUBLE_TAP_DELAY);
+  }, [isActive, isPlaying, player, showTapIcon, videoRef, handleDoubleTap]);
 
   /* --------------------------------------------------------------------- *
    *                TAG PRESS (opens Search screen)
@@ -260,7 +351,30 @@ const VideoItem = React.memo(
     navigation.navigate('Search', { query: tag, mode: 'tags' });
   }, [navigation]);
 
-  const handleShare = React.useCallback(() => {}, []);
+  const handleShare = React.useCallback(async () => {
+    try {
+      if (Platform.OS === 'web') {
+        if (navigator.share) {
+          await navigator.share({
+            title: video.title,
+            text: `${video.title} - ${video.location}`,
+            url: window.location.href,
+          });
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          alert('הקישור הועתק ללוח!');
+        }
+      } else {
+        const { Share } = await import('react-native');
+        await Share.share({
+          message: `${video.title} - ${video.location}`,
+          title: video.title,
+        });
+      }
+    } catch (err) {
+      console.log('Share error:', err);
+    }
+  }, [video.title, video.location]);
   const handleBook = React.useCallback(() => {}, []);
   const handleDetails = React.useCallback(() => setItineraryVisible(true), []);
   const handleInfluencer = React.useCallback(() => {
@@ -321,15 +435,71 @@ const VideoItem = React.memo(
         </Animated.View>
       )}
 
-      {/* Optional loading/error state */}
-      {loading && (
-        <View style={styles.loadingContainer}>
-          <Text style={styles.errorText}>Loading…</Text>
+      {/* DOUBLE TAP LIKE ANIMATION */}
+      {likeIcon && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            overlayStyles.centerIconContainer,
+            {
+              opacity: likeIconAnim,
+              transform: [
+                {
+                  scale: likeIconAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.5, 1.2],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <Ionicons name="heart" size={120} color="#FF3B5C" />
+        </Animated.View>
+      )}
+
+      {/* VIDEO PROGRESS BAR */}
+      {isActive && duration > 0 && (
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${(progress / duration) * 100}%` },
+              ]}
+            />
+          </View>
         </View>
       )}
+
+      {/* Loading state */}
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <View style={styles.spinner}>
+            <Ionicons name="hourglass-outline" size={48} color="#fff" />
+          </View>
+          <Text style={styles.loadingText}>טוען וידאו...</Text>
+        </View>
+      )}
+      
+      {/* Error state with retry */}
       {error && (
         <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color="#FF3B5C" />
           <Text style={styles.errorText}>שגיאה בטעינת הסרטון</Text>
+          <TouchableOpacity 
+            style={styles.retryBtn}
+            onPress={() => {
+              setError(false);
+              setLoading(true);
+              if (Platform.OS === 'web' && videoRef.current) {
+                videoRef.current.load();
+              }
+            }}
+          >
+            <Ionicons name="refresh-outline" size={20} color="#fff" />
+            <Text style={styles.retryText}>נסה שוב</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -415,7 +585,11 @@ const VideoOverlay = React.memo(function VideoOverlay({
     <View style={overlayStyles.container} pointerEvents="box-none">
       {/* RIGHT-SIDE ACTION BUTTONS */}
       <View style={overlayStyles.rightActions}>
-        <TouchableOpacity style={overlayStyles.actionBtn} onPress={onLike}>
+        <TouchableOpacity 
+          style={overlayStyles.actionBtn} 
+          onPress={onLike}
+          activeOpacity={0.7}
+        >
           <Ionicons
             name={isLiked ? 'heart' : 'heart-outline'}
             size={32}
@@ -424,14 +598,22 @@ const VideoOverlay = React.memo(function VideoOverlay({
           <Text style={overlayStyles.actionText}>{formatCount(likesCount)}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={overlayStyles.actionBtn} onPress={onComment}>
+        <TouchableOpacity 
+          style={overlayStyles.actionBtn} 
+          onPress={onComment}
+          activeOpacity={0.7}
+        >
           <Ionicons name="chatbubble-outline" size={30} color="#fff" />
           <Text style={overlayStyles.actionText}>
             {formatCount(commentsCount)}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={overlayStyles.actionBtn} onPress={onSave}>
+        <TouchableOpacity 
+          style={overlayStyles.actionBtn} 
+          onPress={onSave}
+          activeOpacity={0.7}
+        >
           <Ionicons
             name={isSaved ? 'bookmark' : 'bookmark-outline'}
             size={30}
@@ -440,7 +622,11 @@ const VideoOverlay = React.memo(function VideoOverlay({
           <Text style={overlayStyles.actionText}>שמור</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={overlayStyles.actionBtn} onPress={onShare}>
+        <TouchableOpacity 
+          style={overlayStyles.actionBtn} 
+          onPress={onShare}
+          activeOpacity={0.7}
+        >
           <Ionicons name="share-outline" size={30} color="#fff" />
           <Text style={overlayStyles.actionText}>
             {formatCount(video.shares)}
@@ -528,7 +714,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
+    backgroundColor: 'rgba(0,0,0,0.9)',
     zIndex: 1,
   },
   errorContainer: {
@@ -545,6 +731,46 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#fff',
     fontSize: 16,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 14,
+    marginTop: 12,
+  },
+  spinner: {
+    marginBottom: 8,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#00D5FF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  retryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  progressContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  progressBar: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#00D5FF',
   },
 });
 

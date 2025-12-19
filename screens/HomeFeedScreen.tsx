@@ -31,6 +31,7 @@ import {
   TouchableOpacity,
   Text,
   Platform,
+  RefreshControl,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -71,6 +72,15 @@ export default function HomeFeedScreen({ route }: any) {
 
   // Selected category filter
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('All');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    // Simulate refresh - in real app, fetch new data from API
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   // In case navigation sends us a specific video to jump to
   const videoId = route?.params?.videoId;
@@ -147,7 +157,13 @@ export default function HomeFeedScreen({ route }: any) {
         {isWeb && WebVideoFeed ? (
           <WebVideoFeed filter={selectedFilter} initialVideoId={videoId} feedActive={feedActive} />
         ) : (
-          <VideoFeed filter={selectedFilter} initialVideoId={videoId} feedActive={feedActive} />
+          <VideoFeed 
+            filter={selectedFilter} 
+            initialVideoId={videoId} 
+            feedActive={feedActive}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+          />
         )}
       </View>
     </View>
