@@ -580,7 +580,7 @@ function WebVideoItem({
           <Text style={styles.days}>🗓️ {video.days} ימים</Text>
           <Text style={styles.location}>📍 {video.location}</Text>
 
-          {video.tags && video.tags.length > 0 && (
+          {video.tags && Array.isArray(video.tags) && video.tags.length > 0 && (
             <ScrollView
               style={styles.tagsScroll}
               contentContainerStyle={styles.tagsContent}
