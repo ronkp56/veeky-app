@@ -187,11 +187,19 @@ export default function VideoFeed({
       setLoading(true);
       setError(null);
       const data = await videoService.getVideos(0, 20, filter === 'All' ? undefined : filter);
-      setVideos(data.length > 0 ? data : MOCK_DATA);
+      console.log('📹 Loaded from DB:', data.length, 'videos');
+      console.log('📹 First video:', data[0]);
+      if (data.length === 0) {
+        console.log('⚠️ DB empty, using MOCK_DATA');
+        setVideos(MOCK_DATA);
+      } else {
+        console.log('✅ Using DB data');
+        setVideos(data);
+      }
     } catch (err) {
-      console.error('Error loading videos:', err);
+      console.error('❌ Error loading videos:', err);
       setError('Failed to load videos');
-      setVideos(MOCK_DATA); // Fallback to mock data
+      setVideos(MOCK_DATA);
     } finally {
       setLoading(false);
     }
