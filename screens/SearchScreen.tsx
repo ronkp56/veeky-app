@@ -1,4 +1,27 @@
-// screens/SearchScreen.tsx
+/**
+ * ./screens/SearchScreen.tsx
+ *
+ * Global search and discovery screen for Veeky.
+ *
+ * Purpose:
+ * --------------------------------------------------------------------
+ * Allows users to search through all available videos using different
+ * matching modes (tags, location, influencer, title, or all combined).
+ *
+ * Key behaviors:
+ * --------------------------------------------------------------------
+ * ✔ Text-based search with live filtering
+ * ✔ Multiple search modes (chips)
+ * ✔ Results shown in a 3-column visual grid
+ * ✔ Tapping a result jumps back into Home feed at the correct video
+ *
+ * Important design decision:
+ * --------------------------------------------------------------------
+ * This screen DOES NOT play videos.
+ * It only helps users discover content and then redirects them
+ * back to the HomeFeedScreen with a specific `videoId`.
+ */
+
 import React, { useMemo, useState } from 'react';
 import {
   View,
@@ -9,7 +32,6 @@ import {
   FlatList,
   Dimensions,
   Image,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, CommonActions } from '@react-navigation/native';
@@ -19,23 +41,52 @@ import { MOCK_DATA, VideoData } from '../components/VideoFeed';
 import { getThumbnailForLocation } from '../utils/thumbnails';
 import { RootStackParamList } from '../navigation/RootNavigator';
 
-export type SearchMode = 'all' | 'tags' | 'location' | 'influencer' | 'title';
+/**
+ * Supported search modes.
+ * Determines which fields are matched against the query.
+ */
+export type SearchMode =
+  | 'all'
+  | 'tags'
+  | 'location'
+  | 'influencer'
+  | 'title';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Search'>;
 
+// Grid layout: 3 thumbnails per row
 const { width } = Dimensions.get('window');
 const itemWidth = (width - 4) / 3;
 
+/**
+ * Normalize strings for consistent searching:
+ * - trim whitespace
+ * - lowercase
+ */
 function normalize(s: string): string {
   return s.trim().toLowerCase();
 }
 
+/**
+ * Simple helper for substring matching.
+ * Used internally by videoMatchesMode().
+ */
 function matchIncludes(haystack: string, needle: string): boolean {
   if (!needle) return true;
   return normalize(haystack).includes(normalize(needle));
 }
 
-function videoMatchesMode(video: VideoData, q: string, mode: SearchMode): boolean {
+/**
+ * Core matching logic.
+ *
+ * Determines whether a video matches the search query
+ * based on the selected search mode.
+ */
+function videoMatchesMode(
+  video: VideoData,
+  q: string,
+  mode: SearchMode
+): boolean {
   const query = normalize(q);
   if (!query) return true;
 
@@ -67,17 +118,37 @@ function videoMatchesMode(video: VideoData, q: string, mode: SearchMode): boolea
 export default function SearchScreen({ route }: Props) {
   const navigation = useNavigation();
 
+  /**
+   * Initial values may be provided by navigation:
+   * - When clicking a tag
+   * - When opening search with a predefined mode
+   */
   const initialQuery = route.params?.query ?? '';
   const initialMode = (route.params?.mode ?? 'all') as SearchMode;
 
   const [query, setQuery] = useState(initialQuery);
   const [mode, setMode] = useState<SearchMode>(initialMode);
 
+  /**
+   * Compute filtered results whenever:
+   * - query changes
+   * - mode changes
+   *
+   * useMemo avoids unnecessary recalculations.
+   */
   const results = useMemo(() => {
     return MOCK_DATA.filter((v) => videoMatchesMode(v, query, mode));
   }, [query, mode]);
 
-  const modeItems: { key: SearchMode; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  /**
+   * Mode selector configuration.
+   * Rendered as selectable chips.
+   */
+  const modeItems: {
+    key: SearchMode;
+    label: string;
+    icon: keyof typeof Ionicons.glyphMap;
+  }[] = [
     { key: 'all', label: 'הכל', icon: 'apps-outline' },
     { key: 'tags', label: 'תגיות', icon: 'pricetags-outline' },
     { key: 'location', label: 'מקום', icon: 'location-outline' },
@@ -85,33 +156,47 @@ export default function SearchScreen({ route }: Props) {
     { key: 'title', label: 'שם', icon: 'text-outline' },
   ];
 
-    const openVideoInFeed = (videoId: string) => {
-        navigation.dispatch(
-            CommonActions.reset({
-            index: 0,
-            routes: [
+  /**
+   * Navigate back to the Home feed and jump directly
+   * to the selected video.
+   *
+   * This uses a navigation reset to ensure:
+   * - Tabs are visible
+   * - Home is active
+   * - Feed scrolls to the correct video
+   */
+  const openVideoInFeed = (videoId: string) => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'MainTabs',
+            state: {
+              index: 0,
+              routes: [
                 {
-                name: 'MainTabs',
-                state: {
-                    index: 0,
-                    routes: [
-                    {
-                        name: 'Home',
-                        params: { videoId },
-                    },
-                    ],
+                  name: 'Home',
+                  params: { videoId },
                 },
-                },
-            ],
-            })
-        );
-    };
+              ],
+            },
+          },
+        ],
+      })
+    );
+  };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* ------------------------------------------------------------
+          HEADER: back button + search input
+         ------------------------------------------------------------ */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => (navigation as any).goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => (navigation as any).goBack()}
+          style={styles.backBtn}
+        >
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
 
@@ -127,18 +212,26 @@ export default function SearchScreen({ route }: Props) {
             autoCapitalize="none"
             returnKeyType="search"
           />
+
+          {/* Clear search input */}
           {!!query && (
-            <TouchableOpacity onPress={() => setQuery('')} style={styles.clearBtn}>
+            <TouchableOpacity
+              onPress={() => setQuery('')}
+              style={styles.clearBtn}
+            >
               <Ionicons name="close-circle" size={18} color="#888" />
             </TouchableOpacity>
           )}
         </View>
       </View>
 
-      {/* Mode chips */}
+      {/* ------------------------------------------------------------
+          SEARCH MODE CHIPS
+         ------------------------------------------------------------ */}
       <View style={styles.modes}>
         {modeItems.map((m) => {
           const active = mode === m.key;
+
           return (
             <TouchableOpacity
               key={m.key}
@@ -146,24 +239,48 @@ export default function SearchScreen({ route }: Props) {
               style={[styles.modeChip, active && styles.modeChipActive]}
               activeOpacity={0.9}
             >
-              <Ionicons name={m.icon} size={16} color={active ? '#000' : '#fff'} />
-              <Text style={[styles.modeText, active && styles.modeTextActive]}>{m.label}</Text>
+              <Ionicons
+                name={m.icon}
+                size={16}
+                color={active ? '#000' : '#fff'}
+              />
+              <Text
+                style={[styles.modeText, active && styles.modeTextActive]}
+              >
+                {m.label}
+              </Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      {/* Results summary */}
+      {/* ------------------------------------------------------------
+          RESULTS SUMMARY
+         ------------------------------------------------------------ */}
       <View style={styles.summaryRow}>
         <Text style={styles.summaryText}>
-          {query ? `נמצאו ${results.length} תוצאות` : `הקלד כדי לחפש (${MOCK_DATA.length} סרטונים)`}
+          {query
+            ? `נמצאו ${results.length} תוצאות`
+            : `הקלד כדי לחפש (${MOCK_DATA.length} סרטונים)`}
         </Text>
+
         <Text style={styles.summaryHint}>
-          מצב: {mode === 'all' ? 'הכל' : mode === 'tags' ? 'תגיות' : mode === 'location' ? 'מקום' : mode === 'influencer' ? 'יוצר' : 'שם'}
+          מצב:{' '}
+          {mode === 'all'
+            ? 'הכל'
+            : mode === 'tags'
+            ? 'תגיות'
+            : mode === 'location'
+            ? 'מקום'
+            : mode === 'influencer'
+            ? 'יוצר'
+            : 'שם'}
         </Text>
       </View>
 
-      {/* Grid results */}
+      {/* ------------------------------------------------------------
+          SEARCH RESULTS GRID
+         ------------------------------------------------------------ */}
       <FlatList
         data={results}
         numColumns={3}
@@ -175,20 +292,26 @@ export default function SearchScreen({ route }: Props) {
             onPress={() => openVideoInFeed(item.id)}
             activeOpacity={0.85}
           >
+            {/* Thumbnail */}
             <View style={styles.thumbnail}>
               <Image
                 source={{ uri: getThumbnailForLocation(item.location) }}
                 style={styles.thumbnailImage}
                 resizeMode="cover"
               />
+
+              {/* Category badge */}
               <View style={styles.overlay}>
                 <Text style={styles.badge}>{item.category}</Text>
               </View>
             </View>
 
+            {/* Title */}
             <Text style={styles.title} numberOfLines={2}>
               {item.title}
             </Text>
+
+            {/* Meta info */}
             <Text style={styles.meta} numberOfLines={1}>
               {item.influencer.name} • {item.location}
             </Text>
@@ -198,13 +321,19 @@ export default function SearchScreen({ route }: Props) {
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>🔎</Text>
             <Text style={styles.emptyTitle}>אין תוצאות</Text>
-            <Text style={styles.emptySub}>נסה לשנות מצב חיפוש או מילת חיפוש</Text>
+            <Text style={styles.emptySub}>
+              נסה לשנות מצב חיפוש או מילת חיפוש
+            </Text>
           </View>
         }
       />
     </View>
   );
 }
+
+/* --------------------------------------------------------------------
+   STYLES
+-------------------------------------------------------------------- */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
@@ -301,6 +430,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
   emptyIcon: { fontSize: 64, marginBottom: 10 },
-  emptyTitle: { color: '#fff', fontSize: 18, fontWeight: '800', marginBottom: 6 },
-  emptySub: { color: '#888', fontSize: 13, textAlign: 'center' },
+  emptyTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  emptySub: {
+    color: '#888',
+    fontSize: 13,
+    textAlign: 'center',
+  },
 });

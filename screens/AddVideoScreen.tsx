@@ -1,3 +1,37 @@
+/**
+ * ./screens/AddVideoScreen.tsx
+ *
+ * "Add Video" screen for Veeky.
+ *
+ * Purpose:
+ * --------------------------------------------------------------------
+ * This screen is the creator/upload entry point in the app.
+ * It collects all metadata needed to publish a travel video:
+ *  - category (Trips / Lodging / Entertainment)
+ *  - title
+ *  - location
+ *  - price
+ *  - trip duration (days)
+ *  - tags
+ *  - (in the future) the actual video asset
+ *
+ * Current MVP state:
+ * --------------------------------------------------------------------
+ * ✔ UI form is implemented
+ * ✔ Category selector is implemented
+ * ✔ Basic required-field validation is implemented
+ * ✔ Upload is simulated via setTimeout (no backend yet)
+ * ✔ Haptics are triggered for better UX
+ *
+ * Future upgrades (planned):
+ * --------------------------------------------------------------------
+ * • Implement video picking (expo-image-picker or expo-document-picker)
+ * • Upload to backend (multipart upload / presigned URLs / CDN)
+ * • Validate formats (numeric values, currency formatting, tags parsing)
+ * • Preview the selected video
+ * • Add creator/influencer association + location auto-complete
+ */
+
 import React, { useState } from 'react';
 import {
   View,
@@ -6,14 +40,21 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { haptics } from '../utils/haptics';
 
+/**
+ * Categories supported in the app.
+ * These align with your HomeFeed filter chips and video data model.
+ */
 type Category = 'Trips' | 'Lodging' | 'Entertainment';
 
 export default function AddVideoScreen() {
+  /**
+   * Form state (controlled inputs).
+   * - videoUri is reserved for the future picker integration.
+   */
   const [videoUri, setVideoUri] = useState('');
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
@@ -21,14 +62,38 @@ export default function AddVideoScreen() {
   const [days, setDays] = useState('');
   const [category, setCategory] = useState<Category>('Trips');
   const [tags, setTags] = useState('');
+
+  /**
+   * UI state for simulated upload.
+   * Used to disable the upload button and show "uploading..." feedback.
+   */
   const [uploading, setUploading] = useState(false);
 
+  /**
+   * pickVideo()
+   *
+   * Placeholder for selecting a local video file.
+   * In the real app, this will store the picked video URI into `videoUri`.
+   */
   const pickVideo = async () => {
     haptics.light();
+
     // TODO: Implement video picker
+    // Likely options: expo-image-picker or expo-document-picker
     alert('בחירת וידאו - יש לממש עם expo-image-picker');
   };
 
+  /**
+   * handleUpload()
+   *
+   * Performs minimal required-field validation and simulates
+   * a successful upload via setTimeout.
+   *
+   * In production:
+   * - Validate inputs (numbers, currency, tag parsing)
+   * - Upload video to storage/CDN
+   * - Send metadata to backend
+   */
   const handleUpload = async () => {
     if (!title || !location || !price || !days) {
       alert('נא למלא את כל השדות');
@@ -37,12 +102,13 @@ export default function AddVideoScreen() {
 
     setUploading(true);
     haptics.success();
-    
+
     // TODO: Upload to backend
     setTimeout(() => {
       setUploading(false);
       alert('הוידאו הועלה בהצלחה! 🎉');
-      // Reset form
+
+      // Reset form after successful upload
       setTitle('');
       setLocation('');
       setPrice('');
@@ -54,19 +120,26 @@ export default function AddVideoScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      {/* ------------------------------------------------------------
+          HEADER: Title + subtitle
+         ------------------------------------------------------------ */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>העלאת וידאו חדש</Text>
         <Text style={styles.headerSubtitle}>שתף את חוויית הטיול שלך</Text>
       </View>
 
-      {/* Video Picker */}
+      {/* ------------------------------------------------------------
+          VIDEO PICKER AREA (placeholder)
+         ------------------------------------------------------------ */}
       <TouchableOpacity style={styles.videoPicker} onPress={pickVideo}>
         {videoUri ? (
+          // If a video URI exists (future), show a "selected" state
           <View style={styles.videoPreview}>
             <Ionicons name="videocam" size={48} color="#00D5FF" />
             <Text style={styles.videoText}>וידאו נבחר</Text>
           </View>
         ) : (
+          // Default empty state (no video selected yet)
           <View style={styles.videoPlaceholder}>
             <Ionicons name="cloud-upload-outline" size={64} color="#666" />
             <Text style={styles.placeholderText}>לחץ לבחירת וידאו</Text>
@@ -74,7 +147,9 @@ export default function AddVideoScreen() {
         )}
       </TouchableOpacity>
 
-      {/* Category Selection */}
+      {/* ------------------------------------------------------------
+          CATEGORY SELECTION (Trips/Lodging/Entertainment)
+         ------------------------------------------------------------ */}
       <View style={styles.section}>
         <Text style={styles.label}>קטגוריה</Text>
         <View style={styles.categoryRow}>
@@ -96,14 +171,20 @@ export default function AddVideoScreen() {
                   category === cat && styles.categoryTextActive,
                 ]}
               >
-                {cat === 'Trips' ? 'טיולים' : cat === 'Lodging' ? 'לינה' : 'בילויים'}
+                {cat === 'Trips'
+                  ? 'טיולים'
+                  : cat === 'Lodging'
+                  ? 'לינה'
+                  : 'בילויים'}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      {/* Title */}
+      {/* ------------------------------------------------------------
+          TITLE FIELD
+         ------------------------------------------------------------ */}
       <View style={styles.section}>
         <Text style={styles.label}>כותרת</Text>
         <TextInput
@@ -115,7 +196,9 @@ export default function AddVideoScreen() {
         />
       </View>
 
-      {/* Location */}
+      {/* ------------------------------------------------------------
+          LOCATION FIELD
+         ------------------------------------------------------------ */}
       <View style={styles.section}>
         <Text style={styles.label}>מיקום</Text>
         <TextInput
@@ -127,7 +210,9 @@ export default function AddVideoScreen() {
         />
       </View>
 
-      {/* Price & Days */}
+      {/* ------------------------------------------------------------
+          PRICE + DAYS (side by side)
+         ------------------------------------------------------------ */}
       <View style={styles.row}>
         <View style={[styles.section, { flex: 1, marginRight: 8 }]}>
           <Text style={styles.label}>מחיר</Text>
@@ -140,6 +225,7 @@ export default function AddVideoScreen() {
             keyboardType="numeric"
           />
         </View>
+
         <View style={[styles.section, { flex: 1, marginLeft: 8 }]}>
           <Text style={styles.label}>ימים</Text>
           <TextInput
@@ -153,7 +239,9 @@ export default function AddVideoScreen() {
         </View>
       </View>
 
-      {/* Tags */}
+      {/* ------------------------------------------------------------
+          TAGS FIELD
+         ------------------------------------------------------------ */}
       <View style={styles.section}>
         <Text style={styles.label}>תגיות (מופרדות בפסיק)</Text>
         <TextInput
@@ -166,7 +254,9 @@ export default function AddVideoScreen() {
         />
       </View>
 
-      {/* Upload Button */}
+      {/* ------------------------------------------------------------
+          UPLOAD BUTTON
+         ------------------------------------------------------------ */}
       <TouchableOpacity
         style={[styles.uploadBtn, uploading && styles.uploadBtnDisabled]}
         onPress={handleUpload}
@@ -185,10 +275,15 @@ export default function AddVideoScreen() {
         )}
       </TouchableOpacity>
 
+      {/* Spacer so content doesn't feel cramped at bottom */}
       <View style={{ height: 40 }} />
     </ScrollView>
   );
 }
+
+/* --------------------------------------------------------------------
+   STYLES
+-------------------------------------------------------------------- */
 
 const styles = StyleSheet.create({
   container: {
