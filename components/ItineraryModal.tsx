@@ -86,7 +86,7 @@ export default function ItineraryModal({ visible, video, onClose }: Props) {
 
           {/* Scrollable itinerary list */}
           <ScrollView style={styles.scrollView}>
-            {video.itinerary.map((day) => (
+            {video.itinerary && Array.isArray(video.itinerary) && video.itinerary.map((day) => (
               <View key={day.day} style={styles.dayCard}>
 
                 {/* Day header with number + optional "free day" */}
