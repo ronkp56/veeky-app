@@ -43,6 +43,10 @@ type Props = {
 };
 
 export default function ItineraryModal({ visible, video, onClose }: Props) {
+  const handleTouchMove = (e: any) => {
+    e.stopPropagation();
+  };
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.container}>
@@ -59,6 +63,7 @@ export default function ItineraryModal({ visible, video, onClose }: Props) {
           style={styles.content} 
           onStartShouldSetResponder={() => true}
           onMoveShouldSetResponder={() => true}
+          onTouchMove={handleTouchMove}
         >
 
           {/* Header section */}
