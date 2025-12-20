@@ -1,6 +1,6 @@
 /**
- * CommentsModal.tsx
- *
+ * ./components/CommentsModal.tsx
+ *  
  * This component shows a full comment system inside a modal.
  * It is used in the Veeky video feed to let users read and add comments
  * without leaving the current video screen.

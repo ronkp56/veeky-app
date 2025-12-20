@@ -1,6 +1,6 @@
 /**
- * VideoItem.tsx
- *
+ * ./components/VideoItem.tsx
+ * 
  * This component is the heart of the Veeky video experience.
  * It represents ONE video card in the vertical video feed (VideoFeed.tsx).
  *

@@ -1,5 +1,5 @@
 /**
- * OrdersScreen.tsx
+ * ./screens/OrdersScreen.tsx
  *
  * This screen displays the user's past and upcoming reservations.
  *

@@ -1,6 +1,6 @@
 /**
- * RootNavigator.tsx
- *
+ * ./navigation/RootNavigator.tsx
+ * 
  * High-level navigation configuration for the Veeky app.
  *
  * Structure:

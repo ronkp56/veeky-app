@@ -1,5 +1,5 @@
 /**
- * ItineraryModal.tsx
+ * ./components/ItineraryModal.tsx
  *
  * This modal displays the full itinerary (trip plan) for a selected video.
  * It is used when the user taps the "Itinerary / Description" section from the video feed.

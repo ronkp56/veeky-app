@@ -1,5 +1,5 @@
 /**
- * thumbnails.ts
+ * ./utils/thumbnails.ts
  *
  * Utility for generating a thumbnail image URL based on the video's location.
  *

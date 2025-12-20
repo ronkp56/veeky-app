@@ -1,5 +1,5 @@
 /**
- * InfluencerScreen.tsx
+ * ./screens/InfluencerScreen.tsx
  *
  * This screen shows an influencer’s profile and all the trips/videos
  * they have posted on Veeky.

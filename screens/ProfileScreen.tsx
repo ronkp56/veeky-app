@@ -1,5 +1,5 @@
 /**
- * ProfileScreen.tsx
+ * ./screens/ProfileScreen.tsx
  *
  * This is the user profile screen inside the "Profile" tab of Veeky.
  * It is one of the three main destinations inside ProfileStack Navigator.

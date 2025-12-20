@@ -1,5 +1,5 @@
 /**
- * LikedScreen.tsx
+ * ./screens/LikedScreen.tsx
  *
  * This screen shows all videos the user has "liked" (hearted).
  *

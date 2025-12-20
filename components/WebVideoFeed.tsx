@@ -1,5 +1,5 @@
 /**
- * WebVideoFeed.tsx
+ * ./components/WebVideoFeed.tsx
  *
  * This is the web-optimized version of the Veeky video feed.
  * Because Expo Native video (expo-video) doesn't run inside web browsers,

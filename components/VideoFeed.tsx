@@ -1,5 +1,5 @@
 /**
- * VideoFeed.tsx
+ * ./components/VideoFeed.tsx
  *
  * This component renders the TikTok-style vertical video feed of Veeky.
  * It is responsible for:

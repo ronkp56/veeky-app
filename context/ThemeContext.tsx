@@ -1,6 +1,6 @@
 /**
- * ThemeContext.tsx
- *
+ * ./context/ThemeContext.tsx
+ * 
  * Global theme state provider for the entire Veeky app.
  *
  * Responsibilities:

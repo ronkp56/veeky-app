@@ -1,5 +1,5 @@
 /**
- * SavesScreen.tsx
+ * ./screens/SavesScreen.tsx
  *
  * This screen displays all videos the user has saved (bookmarked).
  *

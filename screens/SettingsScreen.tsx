@@ -1,5 +1,5 @@
 /**
- * SettingsScreen.tsx
+ * ./screens/SettingsScreen.tsx
  *
  * This screen allows the user to configure app-level preferences.
  *

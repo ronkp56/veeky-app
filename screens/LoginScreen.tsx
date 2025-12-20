@@ -1,5 +1,5 @@
 /**
- * LoginScreen.tsx
+ * ./screens/LoginScreen.tsx
  *
  * This screen handles the user authentication flow for Veeky.
  *

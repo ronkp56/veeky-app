@@ -1,5 +1,5 @@
 /**
- * HomeFeedScreen.tsx
+ * ./screens/HomeFeedScreen.tsx
  *
  * This is the main screen of Veeky — the TikTok-style home feed.
  * It decides what the user sees when they open the app.
