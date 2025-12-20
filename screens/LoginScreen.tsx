@@ -104,7 +104,11 @@ export default function LoginScreen({ navigation }: Props) {
       // TODO: Replace with real backend authentication
       await wait(900);
 
-      // TODO: Secure token storage (expo-secure-store)
+      // Save login state
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('veeky_logged_in', 'true');
+      }
+
       navigation.replace('MainTabs');
     } catch (e: unknown) {
       console.error('Login failed:', e);
@@ -124,6 +128,11 @@ export default function LoginScreen({ navigation }: Props) {
     try {
       // TODO: Implement expo-auth-session or backend OAuth
       await wait(600);
+      
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('veeky_logged_in', 'true');
+      }
+      
       navigation.replace('MainTabs');
     } catch (e: unknown) {
       console.error('Google login failed:', e);
@@ -137,7 +146,9 @@ export default function LoginScreen({ navigation }: Props) {
    * Guest mode login — skip authentication entirely.
    */
   const continueAsGuest = () => {
-    // Optional: mark guest mode in global state
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('veeky_logged_in', 'true');
+    }
     navigation.replace('MainTabs');
   };
 

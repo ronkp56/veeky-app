@@ -27,7 +27,8 @@
  *  - Icon mapping for tabs is done based on the route name (Home/AddVideo/Profile).
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { haptics } from '../utils/haptics';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -169,10 +170,37 @@ function MainTabs() {
  * and also includes routes that sit "above" the tabs such as Influencer.
  */
 export default function RootNavigator() {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const loggedIn = localStorage.getItem('veeky_logged_in');
+        setIsLoggedIn(loggedIn === 'true');
+      } else {
+        setIsLoggedIn(false);
+      }
+    } catch {
+      setIsLoggedIn(false);
+    }
+  };
+
+  if (isLoggedIn === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+        <ActivityIndicator size="large" color="#00D5FF" />
+      </View>
+    );
+  }
+
   return (
     <Stack.Navigator
-      // Same idea with `id={undefined}` to avoid ID clashes
       id={undefined}
+      initialRouteName={isLoggedIn ? 'MainTabs' : 'Login'}
       screenOptions={{ headerShown: false }}
     >
       {/* Login screen - usually the first screen for non-authenticated users */}
