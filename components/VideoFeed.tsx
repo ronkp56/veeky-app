@@ -41,11 +41,15 @@ import {
   NativeSyntheticEvent,
   TouchableOpacity,
   StyleSheet,
-  View
+  View,
+  ActivityIndicator,
+  Text
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import VideoItem from './VideoItem';
+import { videoService } from '../services/videoService';
+import { Video } from '../types/database';
 
 type VideoFeedProps = {
   filter?: 'All' | 'Trips' | 'Lodging' | 'Entertainment';
@@ -59,47 +63,9 @@ type VideoFeedProps = {
  * Type definition for a single video object.
  * Matches the structure used across the feed UI.
  */
-export type VideoData = {
-  id: string;
-  uri: string;
-  category: 'Trips' | 'Lodging' | 'Entertainment';
-  influencer: {
-    id: string;
-    name: string;
-    avatar: string;
-    verified: boolean;
-  };
-  title: string;
-  location: string;
-  price: string;
-  days: number;
-  itinerary: {
-    day: number;
-    activities: { time: string; activity: string }[];
-    isFree?: boolean;
-  }[];
-  likes: number;
-  comments: number;
-  shares: number;
+export type VideoData = Video;
 
-  /**
-   * Tags describe the trip in a way that is:
-   * - searchable (later: search by tags)
-   * - personal (used to learn user interests)
-   * - useful for creators to describe their business
-   *
-   * Convention:
-   * - Up to 20 tags per video (enforced in AddVideo / backend)
-   * - Each tag is a short word/phrase WITHOUT the "#" prefix.
-   *   UI will render it as #tag.
-   */
-  tags: string[];
-};
-
-/**
- * Temporary mock dataset (until backend integration).
- * All videos use public URLs.
- */
+// Keep MOCK_DATA as fallback
 export const MOCK_DATA: VideoData[] = [
   {
     id: '1',
@@ -203,10 +169,33 @@ export default function VideoFeed({
   onRefresh,
   refreshing = false
 }: VideoFeedProps) {
-  // Screen height — used to create "1 video per page"
   const { height } = useWindowDimensions();
   
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [videos, setVideos] = useState<VideoData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+
+  // Load videos from Supabase
+  useEffect(() => {
+    loadVideos();
+  }, [filter]);
+
+  const loadVideos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await videoService.getVideos(0, 20, filter === 'All' ? undefined : filter);
+      setVideos(data.length > 0 ? data : MOCK_DATA);
+    } catch (err) {
+      console.error('Error loading videos:', err);
+      setError('Failed to load videos');
+      setVideos(MOCK_DATA); // Fallback to mock data
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Reference to the FlatList (so we can scroll programmatically)
   const flatListRef = useRef<FlatList<VideoData>>(null);
@@ -228,11 +217,8 @@ export default function VideoFeed({
    * useMemo ensures we don't recompute on every render.
    */
   const filteredData = useMemo(
-    () =>
-      filter === 'All'
-        ? MOCK_DATA
-        : MOCK_DATA.filter((item) => item.category === filter),
-    [filter]
+    () => videos,
+    [videos]
   );
 
   /**
@@ -363,7 +349,21 @@ export default function VideoFeed({
 
   return (
     <>
-      <FlatList
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#00D5FF" />
+          <Text style={styles.loadingText}>טוען סרטונים...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color="#FF3B5C" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={loadVideos}>
+            <Text style={styles.retryText}>נסה שוב</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
       ref={flatListRef}
       data={filteredData}
       keyExtractor={(item) => item.id}
@@ -394,10 +394,11 @@ export default function VideoFeed({
        * - iOS: uses momentum
        * - Android/Web: may use drag end
        */
-      onScrollBeginDrag={onBeginDrag}
-      onScrollEndDrag={onEndDrag}
-      onMomentumScrollEnd={onMomentumEnd}
+        onScrollBeginDrag={onBeginDrag}
+        onScrollEndDrag={onEndDrag}
+        onMomentumScrollEnd={onMomentumEnd}
       />
+      )}
 
       {showScrollTop && (
         <TouchableOpacity
@@ -428,5 +429,41 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 16,
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+    padding: 20,
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  retryBtn: {
+    backgroundColor: '#00D5FF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  retryText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

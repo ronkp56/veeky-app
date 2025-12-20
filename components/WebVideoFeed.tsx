@@ -313,7 +313,7 @@ function WebVideoItem({
   // Like / save / comments UI state
   const [isLiked, setIsLiked] = useState(storage.isLiked(video.id));
   const [isSaved, setIsSaved] = useState(storage.isSaved(video.id));
-  const [likesCount, setLikesCount] = useState(video.likes);
+  const [likesCount, setLikesCount] = useState(video.likes_count || video.likes || 0);
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [commentsCount, setCommentsCount] = useState(
     storage.getComments(video.id).length
@@ -399,9 +399,10 @@ function WebVideoItem({
   };
 
   const handleInfluencer = () => {
-    navigation.navigate('Influencer', {
-      influencerId: video.influencer.id,
-    });
+    const influencerId = video.profile?.id || video.user_id || video.influencer?.id;
+    if (influencerId) {
+      navigation.navigate('Influencer', { influencerId });
+    }
   };
 
   const handleTagPress = (tag: string) => {
@@ -447,7 +448,7 @@ function WebVideoItem({
             provideRef(el);
             videoRef.current = el;
           }}
-          src={video.uri}
+          src={video.video_url || video.uri}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           playsInline
           muted={false}
@@ -536,7 +537,7 @@ function WebVideoItem({
           <TouchableOpacity style={styles.actionBtn} onPress={() => {}}>
             <Ionicons name="share-outline" size={30} color="#fff" />
             <Text style={styles.actionText}>
-              {formatCount(video.shares)}
+              {formatCount(video.shares_count || video.shares || 0)}
             </Text>
           </TouchableOpacity>
         </View>
@@ -547,10 +548,10 @@ function WebVideoItem({
             style={styles.influencerRow}
             onPress={handleInfluencer}
           >
-            <Text style={styles.avatar}>{video.influencer.avatar}</Text>
+            <Text style={styles.avatar}>{video.profile?.avatar_url || video.influencer?.avatar || '👤'}</Text>
             <Text style={styles.influencerName}>
-              {video.influencer.name}
-              {video.influencer.verified && ' ✓'}
+              {video.profile?.full_name || video.influencer?.name || 'Unknown'}
+              {(video.profile?.verified || video.influencer?.verified) && ' ✓'}
             </Text>
           </TouchableOpacity>
 
