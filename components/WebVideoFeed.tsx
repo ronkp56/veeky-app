@@ -57,6 +57,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { VideoData, MOCK_DATA } from './VideoFeed';
+import { videoService } from '../services/videoService';
 import { storage } from '../utils/storage';
 import CommentsModal from './CommentsModal';
 import ItineraryModal from './ItineraryModal';
@@ -75,15 +76,35 @@ type WebVideoFeedProps = {
 export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActive = true }: WebVideoFeedProps) {
   const { height } = useWindowDimensions();
 
-  /**
-   * Filter videos by category ("Trips", "Lodging", etc)
-   */
-  const filteredData = useMemo(
-    () => (filter === 'All'
-      ? MOCK_DATA
-      : MOCK_DATA.filter((item) => item.category === filter)),
-    [filter]
-  );
+  const [videos, setVideos] = useState<VideoData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadVideos();
+  }, [filter]);
+
+  const loadVideos = async () => {
+    try {
+      setLoading(true);
+      const data = await videoService.getVideos(0, 20, filter === 'All' ? undefined : filter);
+      console.log('📹 [WEB] Loaded from DB:', data.length, 'videos');
+      console.log('📹 [WEB] First video:', data[0]);
+      if (data.length === 0) {
+        console.log('⚠️ [WEB] DB empty, using MOCK_DATA');
+        setVideos(MOCK_DATA);
+      } else {
+        console.log('✅ [WEB] Using DB data');
+        setVideos(data);
+      }
+    } catch (err) {
+      console.error('❌ [WEB] Error loading videos:', err);
+      setVideos(MOCK_DATA);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredData = useMemo(() => videos, [videos]);
 
   /**
    * Index of the video that is currently visible / playing
