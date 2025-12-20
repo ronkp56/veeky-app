@@ -89,13 +89,11 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
       const data = await videoService.getVideos(0, 20, filter === 'All' ? undefined : filter);
       console.log('📹 [WEB] Loaded from DB:', data.length, 'videos');
       console.log('📹 [WEB] First video:', data[0]);
-      if (data.length === 0) {
-        console.log('⚠️ [WEB] DB empty, using MOCK_DATA');
-        setVideos(MOCK_DATA);
-      } else {
-        console.log('✅ [WEB] Using DB data');
-        setVideos(data);
-      }
+      
+      // Combine DB data with MOCK_DATA
+      const combined = [...data, ...MOCK_DATA];
+      console.log('✅ [WEB] Total videos:', combined.length, '(DB + MOCK)');
+      setVideos(combined);
     } catch (err) {
       console.error('❌ [WEB] Error loading videos:', err);
       setVideos(MOCK_DATA);
