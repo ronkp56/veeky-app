@@ -392,6 +392,18 @@ function WebVideoItem({
     showTapIcon(action);
   };
 
+  const handlePressIn = () => {
+    if (videoRef.current && !videoRef.current.paused) {
+      videoRef.current.pause();
+    }
+  };
+
+  const handlePressOut = () => {
+    if (videoRef.current && videoRef.current.paused) {
+      videoRef.current.play();
+    }
+  };
+
   /**
    * Likes / saves
    */
@@ -426,19 +438,20 @@ function WebVideoItem({
 
   const handleDetails = () => {
     setItineraryVisible(true);
-    // Pause video when opening modal
-    if (videoRef.current) {
-      videoRef.current.pause();
-    }
   };
 
   const handleCloseItinerary = () => {
     setItineraryVisible(false);
-    // Resume video when closing modal
-    if (videoRef.current) {
-      videoRef.current.play();
-    }
   };
+
+  // Pause video when modal opens
+  useEffect(() => {
+    if (itineraryVisible && videoRef.current) {
+      videoRef.current.pause();
+    } else if (!itineraryVisible && videoRef.current && !videoRef.current.paused) {
+      // Don't auto-resume - let user control
+    }
+  }, [itineraryVisible]);
 
   // Track progress
   useEffect(() => {
@@ -472,7 +485,12 @@ function WebVideoItem({
         />
 
         {/* Tap layer for toggle play/pause */}
-        <Pressable style={StyleSheet.absoluteFill} onPress={handlePress} />
+        <Pressable 
+          style={StyleSheet.absoluteFill} 
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+        />
 
         {/* Center feedback icon */}
         {tapIcon && (
