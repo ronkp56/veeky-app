@@ -177,6 +177,13 @@ export default function RootNavigator() {
 
   useEffect(() => {
     checkAuth();
+    
+    // Listen to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkAuth = async () => {

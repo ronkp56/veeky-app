@@ -22,7 +22,7 @@
  * • Uses only local video data (VideoData type)
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -43,6 +43,19 @@ type Props = {
 };
 
 export default function ItineraryModal({ visible, video, onClose }: Props) {
+  useEffect(() => {
+    if (visible && typeof document !== 'undefined') {
+      document.body.style.overflow = 'hidden';
+    } else if (typeof document !== 'undefined') {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = 'auto';
+      }
+    };
+  }, [visible]);
+
   const handleTouchMove = (e: any) => {
     e.stopPropagation();
   };

@@ -468,6 +468,7 @@ function WebVideoItem({
           playsInline
           muted={false}
           loop
+          autoPlay
         />
 
         {/* Tap layer for toggle play/pause */}
