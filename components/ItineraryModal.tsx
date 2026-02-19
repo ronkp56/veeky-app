@@ -56,13 +56,13 @@ export default function ItineraryModal({ visible, video, onClose }: Props) {
     };
   }, [visible]);
 
-  const handleTouchMove = (e: any) => {
+  const handleWheel = (e: any) => {
     e.stopPropagation();
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
-      <View style={styles.container}>
+      <View style={styles.container} onStartShouldSetResponder={() => true} onWheel={handleWheel}>
         {/* Header section */}
         <View style={styles.header}>
           <View>
