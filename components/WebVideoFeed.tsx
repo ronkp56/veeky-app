@@ -327,6 +327,8 @@ function WebVideoItem({
   const [likeIcon, setLikeIcon] = useState(false);
   const likeIconAnim = useRef(new Animated.Value(0)).current;
   const lastTap = useRef<number>(0);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wasPlayingBeforeHold = useRef(false);
   
   // Progress bar
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -377,7 +379,10 @@ function WebVideoItem({
   };
 
   /**
-   * User taps on video → toggle play/pause OR double tap to like
+   * TikTok-style tap behavior:
+   * - Single tap: toggle play/pause
+   * - Double tap: like
+   * - Long press (hold): pause while holding, resume on release
    */
   const handlePress = () => {
     const now = Date.now();
@@ -401,14 +406,28 @@ function WebVideoItem({
   };
 
   const handlePressIn = () => {
-    if (videoRef.current && !videoRef.current.paused) {
-      videoRef.current.pause();
-    }
+    // Start long press timer
+    longPressTimer.current = setTimeout(() => {
+      if (videoRef.current && !videoRef.current.paused) {
+        wasPlayingBeforeHold.current = true;
+        videoRef.current.pause();
+      } else {
+        wasPlayingBeforeHold.current = false;
+      }
+    }, 200); // 200ms to detect long press
   };
 
   const handlePressOut = () => {
-    if (videoRef.current && videoRef.current.paused) {
+    // Clear timer if released before long press
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+
+    // Resume if was playing before hold
+    if (wasPlayingBeforeHold.current && videoRef.current) {
       videoRef.current.play();
+      wasPlayingBeforeHold.current = false;
     }
   };
 
