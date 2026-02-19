@@ -1,9 +1,46 @@
-node_modules
-.expo
-.git
+# Development files
+.expo/
+.expo-shared/
+node_modules/
+.git/
+
+# Build artifacts
+dist/
+.next/
+
+# Testing
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Documentation
+*.md
+docs/
+
+# Config files not needed for build
+.prettierrc
+.prettierignore
+.editorconfig
+.eslintrc*
+eslint.config.mjs
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
 .DS_Store
-android
-ios
-.vscode
-.idea
+Thumbs.db
