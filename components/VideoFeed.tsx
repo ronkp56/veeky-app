@@ -188,16 +188,12 @@ export default function VideoFeed({
       setError(null);
       const data = await videoService.getVideos(0, 20, filter === 'All' ? undefined : filter);
       console.log('📹 Loaded from DB:', data.length, 'videos');
-      console.log('📹 First video:', data[0]);
       
-      // Combine DB data with MOCK_DATA
-      const combined = [...data, ...MOCK_DATA];
-      console.log('✅ Total videos:', combined.length, '(DB + MOCK)');
-      setVideos(combined);
+      setVideos(data);
     } catch (err) {
       console.error('❌ Error loading videos:', err);
       setError('Failed to load videos');
-      setVideos(MOCK_DATA);
+      setVideos([]);
     } finally {
       setLoading(false);
     }
