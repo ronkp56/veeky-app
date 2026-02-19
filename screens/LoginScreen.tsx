@@ -42,6 +42,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
+import { authService } from '../services/authService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -100,19 +101,11 @@ export default function LoginScreen({ navigation }: Props) {
 
     try {
       setLoading(true);
-
-      // TODO: Replace with real backend authentication
-      await wait(900);
-
-      // Save login state
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('veeky_logged_in', 'true');
-      }
-
+      await authService.signIn(email.trim(), password);
       navigation.replace('MainTabs');
-    } catch (e: unknown) {
+    } catch (e: any) {
       console.error('Login failed:', e);
-      setError('כניסה נכשלה. נסו שוב.');
+      setError(e.message || 'כניסה נכשלה. נסו שוב.');
     } finally {
       setLoading(false);
     }
@@ -123,32 +116,13 @@ export default function LoginScreen({ navigation }: Props) {
    * Placeholder for real OAuth integration.
    */
   const handleGoogleLogin = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      // TODO: Implement expo-auth-session or backend OAuth
-      await wait(600);
-      
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('veeky_logged_in', 'true');
-      }
-      
-      navigation.replace('MainTabs');
-    } catch (e: unknown) {
-      console.error('Google login failed:', e);
-      setError('התחברות עם Google נכשלה.');
-    } finally {
-      setLoading(false);
-    }
+    setError('Google login - בקרוב');
   };
 
   /**
    * Guest mode login — skip authentication entirely.
    */
   const continueAsGuest = () => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('veeky_logged_in', 'true');
-    }
     navigation.replace('MainTabs');
   };
 
@@ -346,9 +320,7 @@ export default function LoginScreen({ navigation }: Props) {
              ------------------------------------------------------------ */}
           <View style={styles.bottomActions}>
             <TouchableOpacity
-              onPress={() => {
-                // TODO: Navigate to signup screen
-              }}
+              onPress={() => navigation.navigate('Signup')}
             >
               <Text style={[styles.link, { color: c.link }]}>
                 אין לך חשבון? יצירת חשבון

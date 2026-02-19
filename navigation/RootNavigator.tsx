@@ -34,8 +34,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NavigatorScreenParams } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../lib/supabase';
 
 import LoginScreen from '../screens/LoginScreen';
+import SignupScreen from '../screens/SignupScreen';
 import HomeFeedScreen from '../screens/HomeFeedScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import InfluencerScreen from '../screens/InfluencerScreen';
@@ -66,6 +68,7 @@ export type ProfileStackParamList = {
  */
 export type RootStackParamList = {
   Login: undefined;
+  Signup: undefined;
   MainTabs: NavigatorScreenParams<MainTabsParamList> | undefined;
   Influencer: { influencerId: string };
 
@@ -178,13 +181,10 @@ export default function RootNavigator() {
 
   const checkAuth = async () => {
     try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const loggedIn = localStorage.getItem('veeky_logged_in');
-        setIsLoggedIn(loggedIn === 'true');
-      } else {
-        setIsLoggedIn(false);
-      }
-    } catch {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+    } catch (error) {
+      console.error('Auth check failed:', error);
       setIsLoggedIn(false);
     }
   };
@@ -205,6 +205,8 @@ export default function RootNavigator() {
     >
       {/* Login screen - usually the first screen for non-authenticated users */}
       <Stack.Screen name="Login" component={LoginScreen} />
+      {/* Signup screen */}
+      <Stack.Screen name="Signup" component={SignupScreen} />
       {/* Main application tabs (Home, AddVideo, Profile) */}
       <Stack.Screen name="MainTabs" component={MainTabs} />
       {/* Search screen */}
