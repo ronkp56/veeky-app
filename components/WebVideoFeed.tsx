@@ -56,7 +56,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { VideoData, MOCK_DATA } from './VideoFeed';
+import { VideoData } from './VideoFeed';
 import { videoService } from '../services/videoService';
 import { storage } from '../utils/storage';
 import CommentsModal from './CommentsModal';
@@ -126,7 +126,7 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
    * Play only the video at index, pause all others
    */
   const playIndex = (index: number) => {
-    videoRefs.current.forEach((videoEl, idx) => {
+    videoRefs.current.forEach((videoEl: HTMLVideoElement | null, idx: number) => {
       if (!videoEl) return;
 
       if (idx === index) {
@@ -152,7 +152,7 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
   useEffect(() => {
     if (!feedActive) {
       // Pause everything when user leaves Home tab
-      videoRefs.current.forEach((v) => v?.pause());
+      videoRefs.current.forEach((v: HTMLVideoElement | null) => v?.pause());
       return;
     }
 
@@ -165,7 +165,7 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
   useEffect(() => {
     if (!initialVideoId) return;
 
-    const index = filteredData.findIndex((v) => v.id === initialVideoId);
+    const index = filteredData.findIndex((v: VideoData) => v.id === initialVideoId);
     if (index === -1) return;
 
     setTimeout(() => {
@@ -189,7 +189,7 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
     }
 
     return () => {
-      videoRefs.current.forEach((v) => v?.pause());
+      videoRefs.current.forEach((v: HTMLVideoElement | null) => v?.pause());
     };
   }, [filteredData.length, feedActive, activeIndex]);
 
@@ -210,11 +210,14 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
     }
   };
 
+  // Track if any modal is open
+  const [anyModalOpen, setAnyModalOpen] = useState(false);
+
   // ---------------------------------------------------------------------------
   // Shorts-like web paging: one wheel/touch gesture = one step
   // ---------------------------------------------------------------------------
   const handleWheel = (e: any) => {
-
+    if (anyModalOpen) return; // Block scrolling when modal is open
     if (!feedActive) return;
     if (wheelLockRef.current) return;
 
@@ -232,12 +235,14 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
   };
 
   const handleTouchStart = (e: any) => {
+    if (anyModalOpen) return; // Block touch when modal is open
     if (!feedActive) return;
     const y = e?.nativeEvent?.pageY ?? e?.touches?.[0]?.pageY ?? null;
     touchStartYRef.current = typeof y === 'number' ? y : null;
   };
 
   const handleTouchEnd = (e: any) => {
+    if (anyModalOpen) return; // Block touch when modal is open
     if (!feedActive) return;
 
     const startY = touchStartYRef.current;
@@ -274,7 +279,7 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
         scrollEventThrottle={16}
         contentContainerStyle={{ height: height * filteredData.length }}
       >
-        {filteredData.map((video, index) => (
+        {filteredData.map((video: VideoData, index: number) => (
           <WebVideoItem
             key={video.id}
             video={video}
@@ -282,6 +287,7 @@ export default function WebVideoFeed({ filter = 'All', initialVideoId, feedActiv
             height={height}
             provideRef={(el) => (videoRefs.current[index] = el)}
             onToggle={handleToggleFromItem}
+            onModalChange={setAnyModalOpen}
           />
         ))}
       </ScrollView>
@@ -300,6 +306,7 @@ type WebVideoItemProps = {
   height: number;
   provideRef: (el: HTMLVideoElement | null) => void;
   onToggle: (index: number) => 'play' | 'pause';
+  onModalChange: (open: boolean) => void;
 };
 
 function WebVideoItem({
@@ -308,6 +315,7 @@ function WebVideoItem({
   height,
   provideRef,
   onToggle,
+  onModalChange,
 }: WebVideoItemProps) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -328,7 +336,7 @@ function WebVideoItem({
   // Like / save / comments UI state
   const [isLiked, setIsLiked] = useState(storage.isLiked(video.id));
   const [isSaved, setIsSaved] = useState(storage.isSaved(video.id));
-  const [likesCount, setLikesCount] = useState(video.likes_count || video.likes || 0);
+  const [likesCount, setLikesCount] = useState(video.likes_count || 0);
   const [commentsVisible, setCommentsVisible] = useState(false);
   const [commentsCount, setCommentsCount] = useState(
     storage.getComments(video.id).length
@@ -381,7 +389,7 @@ function WebVideoItem({
       if (!isLiked) {
         const liked = storage.toggleLike(video.id);
         setIsLiked(liked);
-        setLikesCount((prev) => prev + 1);
+        setLikesCount((prev: number) => prev + 1);
         showLikeAnimation();
       }
       return;
@@ -410,7 +418,7 @@ function WebVideoItem({
   const handleLike = () => {
     const liked = storage.toggleLike(video.id);
     setIsLiked(liked);
-    setLikesCount((prev) => (liked ? prev + 1 : prev - 1));
+    setLikesCount((prev: number) => (liked ? prev + 1 : prev - 1));
   };
 
   const handleSave = () => {
@@ -426,7 +434,7 @@ function WebVideoItem({
   };
 
   const handleInfluencer = () => {
-    const influencerId = video.profile?.id || video.user_id || video.influencer?.id;
+    const influencerId = video.profile?.id || video.user_id;
     if (influencerId) {
       navigation.navigate('Influencer', { influencerId });
     }
@@ -438,10 +446,12 @@ function WebVideoItem({
 
   const handleDetails = () => {
     setItineraryVisible(true);
+    onModalChange(true);
   };
 
   const handleCloseItinerary = () => {
     setItineraryVisible(false);
+    onModalChange(false);
   };
 
   // Pause video when modal opens
@@ -472,11 +482,11 @@ function WebVideoItem({
       <View style={styles.videoWrapper}>
         {/* RAW HTML5 VIDEO ELEMENT */}
         <video
-          ref={(el) => {
+          ref={(el: HTMLVideoElement | null) => {
             provideRef(el);
             videoRef.current = el;
           }}
-          src={video.video_url || video.uri}
+          src={video.video_url}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           playsInline
           muted={false}
@@ -571,7 +581,7 @@ function WebVideoItem({
           <TouchableOpacity style={styles.actionBtn} onPress={() => {}}>
             <Ionicons name="share-outline" size={30} color="#fff" />
             <Text style={styles.actionText}>
-              {formatCount(video.shares_count || video.shares || 0)}
+              {formatCount(video.shares_count || 0)}
             </Text>
           </TouchableOpacity>
         </View>
@@ -582,10 +592,10 @@ function WebVideoItem({
             style={styles.influencerRow}
             onPress={handleInfluencer}
           >
-            <Text style={styles.avatar}>{video.profile?.avatar_url || video.influencer?.avatar || '👤'}</Text>
+            <Text style={styles.avatar}>{video.profile?.avatar_url || '👤'}</Text>
             <Text style={styles.influencerName}>
-              {video.profile?.full_name || video.influencer?.name || 'Unknown'}
-              {(video.profile?.verified || video.influencer?.verified) && ' ✓'}
+              {video.profile?.full_name || 'Unknown'}
+              {video.profile?.verified && ' ✓'}
             </Text>
           </TouchableOpacity>
 
