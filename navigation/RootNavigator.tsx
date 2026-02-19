@@ -200,19 +200,18 @@ export default function RootNavigator() {
   return (
     <Stack.Navigator
       id={undefined}
-      initialRouteName={isLoggedIn ? 'MainTabs' : 'Login'}
       screenOptions={{ headerShown: false }}
     >
-      {/* Login screen - usually the first screen for non-authenticated users */}
-      <Stack.Screen name="Login" component={LoginScreen} />
-      {/* Signup screen */}
+      {!isLoggedIn ? (
+        <Stack.Screen name="Login" component={LoginScreen} />
+      ) : (
+        <>
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Screen name="Influencer" component={InfluencerScreen} />
+        </>
+      )}
       <Stack.Screen name="Signup" component={SignupScreen} />
-      {/* Main application tabs (Home, AddVideo, Profile) */}
-      <Stack.Screen name="MainTabs" component={MainTabs} />
-      {/* Search screen */}
-      <Stack.Screen name="Search" component={SearchScreen} />
-      {/* Influencer profile / details screen */}
-      <Stack.Screen name="Influencer" component={InfluencerScreen} />
     </Stack.Navigator>
   );
 }

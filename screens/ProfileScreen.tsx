@@ -29,7 +29,7 @@
  * • “Logout” currently does nothing; real logout logic will be added later.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -39,11 +39,12 @@ import {
   Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileStackParamList } from '../navigation/RootNavigator';
 import { storage } from '../utils/storage';
 import { useTheme } from '../context/ThemeContext';
+import { authService } from '../services/authService';
 
 export default function ProfileScreen() {
   const navigation =
@@ -55,9 +56,39 @@ export default function ProfileScreen() {
   // Numeric counters
   const [savedCount, setSavedCount] = useState(0);
   const [likedCount, setLikedCount] = useState(0);
-
-  // About modal visibility
   const [aboutVisible, setAboutVisible] = useState(false);
+  const [userEmail, setUserEmail] = useState('guest@veeky.com');
+  const [userName, setUserName] = useState('משתמש אורח');
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      if (user) {
+        setUserEmail(user.email || 'guest@veeky.com');
+        setUserName(user.user_metadata?.username || user.email?.split('@')[0] || 'משתמש');
+      }
+    } catch (error) {
+      console.error('Failed to load user:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authService.signOut();
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'Login' as never }],
+        })
+      );
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   /**
    * Refresh saved/liked counts every time user re-enters this screen.
@@ -87,8 +118,8 @@ export default function ProfileScreen() {
           <Text style={styles.avatar}>👤</Text>
         </View>
 
-        <Text style={[styles.name, { color: text }]}>משתמש אורח</Text>
-        <Text style={[styles.email, { color: subtext }]}>guest@veeky.com</Text>
+        <Text style={[styles.name, { color: text }]}>{userName}</Text>
+        <Text style={[styles.email, { color: subtext }]}>{userEmail}</Text>
       </View>
 
       {/* ------------------------------------------------------------
@@ -171,7 +202,7 @@ export default function ProfileScreen() {
       {/* ------------------------------------------------------------
           LOGOUT BUTTON (placeholder)
          ------------------------------------------------------------ */}
-      <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: card }]}>
+      <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: card }]} onPress={handleLogout}>
         <Text style={styles.logoutText}>התנתק</Text>
       </TouchableOpacity>
 
