@@ -61,45 +61,25 @@ export default function ItineraryModal({ visible, video, onClose }: Props) {
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType="slide" transparent={false}>
       <View style={styles.container}>
-
-        {/* Background overlay. Clicking closes modal */}
-        <TouchableOpacity
-          style={styles.backdrop}
-          onPress={onClose}
-          activeOpacity={1}
-        />
-
-        {/* Main modal body */}
-        <View 
-          style={styles.content} 
-          onStartShouldSetResponder={() => true}
-          onMoveShouldSetResponder={() => true}
-          onTouchMove={handleTouchMove}
-        >
-
-          {/* Header section */}
-          <View style={styles.header}>
-            <View>
-              {/* Trip title */}
-              <Text style={styles.title}>{video.title}</Text>
-
-              {/* Trip metadata (days + location) */}
-              <Text style={styles.subtitle}>
-                {video.days} ימים • {video.location}
-              </Text>
-            </View>
-
-            {/* Close button */}
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={28} color="#fff" />
-            </TouchableOpacity>
+        {/* Header section */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>{video.title}</Text>
+            <Text style={styles.subtitle}>
+              {video.days} ימים • {video.location}
+            </Text>
           </View>
 
-          {/* Scrollable itinerary list */}
-          <ScrollView style={styles.scrollView}>
-            {video.itinerary && Array.isArray(video.itinerary) && video.itinerary.map((day) => (
+          <TouchableOpacity onPress={onClose}>
+            <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Scrollable itinerary list */}
+        <ScrollView style={styles.scrollView}>
+          {video.itinerary && Array.isArray(video.itinerary) && video.itinerary.map((day) => (
               <View key={day.day} style={styles.dayCard}>
 
                 {/* Day header with number + optional "free day" */}
@@ -144,18 +124,16 @@ export default function ItineraryModal({ visible, video, onClose }: Props) {
                   ))}
                 </View>
               </View>
-            ))}
-          </ScrollView>
+          ))}
+        </ScrollView>
 
-          {/* Footer section – Booking button */}
-          <View style={styles.footer}>
-            <TouchableOpacity style={styles.bookBtn} onPress={onClose}>
-              <Text style={styles.bookBtnText}>
-                הזמן עכשיו • {video.price}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
+        {/* Footer section – Booking button */}
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.bookBtn} onPress={onClose}>
+            <Text style={styles.bookBtnText}>
+              הזמן עכשיו • {video.price}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -169,22 +147,7 @@ export default function ItineraryModal({ visible, video, onClose }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-
-  // Backdrop overlay
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-
-  // Main modal window
-  content: {
-    height: '80%',
     backgroundColor: '#000',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderTopWidth: 1,
-    borderColor: '#222',
   },
 
   // Header area
@@ -193,6 +156,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     padding: 16,
+    paddingTop: 60,
     borderBottomWidth: 1,
     borderBottomColor: '#222',
   },
