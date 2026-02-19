@@ -30,6 +30,26 @@ import RootNavigator from './navigation/RootNavigator';
 import { ThemeProvider } from './context/ThemeContext';
 
 export default function App() {
+  const linking = {
+    prefixes: ['https://veeky-app.vercel.app', 'http://localhost:8081'],
+    config: {
+      screens: {
+        Login: 'login',
+        Signup: 'signup',
+        MainTabs: {
+          path: 'main',
+          screens: {
+            Home: 'home',
+            AddVideo: 'add',
+            Profile: 'profile',
+          },
+        },
+        Search: 'search',
+        Influencer: 'influencer/:influencerId',
+      },
+    },
+  };
+
   return (
     /**
      * ThemeProvider:
@@ -44,7 +64,7 @@ export default function App() {
        * Required by React Navigation.
        * Manages navigation state, deep linking, and screen transitions.
        */}
-      <NavigationContainer>
+      <NavigationContainer linking={linking}>
         {/**
          * RootNavigator:
          * --------------------------------------------------------------

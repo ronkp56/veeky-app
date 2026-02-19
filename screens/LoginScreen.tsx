@@ -319,14 +319,6 @@ export default function LoginScreen({ navigation }: Props) {
               BOTTOM ACTIONS
              ------------------------------------------------------------ */}
           <View style={styles.bottomActions}>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Signup')}
-            >
-              <Text style={[styles.link, { color: c.link }]}>
-                אין לך חשבון? יצירת חשבון
-              </Text>
-            </TouchableOpacity>
-
             <TouchableOpacity onPress={continueAsGuest}>
               <Text style={[styles.linkMuted, { color: c.muted }]}>
                 המשך כאורח
