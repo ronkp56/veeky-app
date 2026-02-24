@@ -126,6 +126,13 @@ export default function LoginScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.bottomActions}>
+          <TouchableOpacity onPress={() => navigation.navigate('Signup')} style={styles.signupBtn}>
+            <Text style={[styles.signupText, { color: c.muted }]}>
+              אין לך חשבון?{' '}
+              <Text style={{ color: c.link, fontWeight: '600' }}>הירשם עכשיו</Text>
+            </Text>
+          </TouchableOpacity>
+
           <Text style={[styles.terms, { color: c.muted }]}>
             בלחיצה על "התחברות" אתה מאשר את{' '}
             <Text style={{ color: c.link }}>תנאי השימוש</Text> ו
@@ -172,5 +179,7 @@ const styles = StyleSheet.create({
   primaryBtn: { height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   primaryText: { fontWeight: '700', fontSize: 16 },
   bottomActions: { alignItems: 'center', marginTop: 16 },
+  signupBtn: { marginBottom: 12 },
+  signupText: { fontSize: 14, textAlign: 'center' },
   terms: { textAlign: 'center', fontSize: 12, lineHeight: 18, marginTop: 6 },
 });
