@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { authService } from '../services/authService';
+import { supabase } from '../lib/supabase';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -27,12 +28,13 @@ export default function LoginScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Handle email confirmation redirect (access_token in URL hash)
+  // After email confirmation, Supabase puts access_token in the URL hash
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     const hash = window.location.hash;
     if (hash.includes('access_token') && hash.includes('type=signup')) {
-      navigation.replace('MainTabs');
+      // Give Supabase time to parse the token and create the session
+      setTimeout(() => navigation.replace('MainTabs'), 500);
     }
   }, []);
 
