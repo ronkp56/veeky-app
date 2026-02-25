@@ -8,12 +8,14 @@ import {
   StyleSheet,
   ScrollView,
   useColorScheme,
+  Platform,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { authService } from '../services/authService';
+import { supabase } from '../lib/supabase';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Signup'>;
 
@@ -40,8 +42,11 @@ export default function SignupScreen({ navigation }: Props) {
     [emailValid, passwordValid, usernameValid]
   );
 
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
   const handleSignup = async () => {
     setError(null);
+    setSuccessMsg(null);
 
     if (!formValid) {
       setError('נא למלא את כל השדות בצורה תקינה');
@@ -50,21 +55,38 @@ export default function SignupScreen({ navigation }: Props) {
 
     try {
       setLoading(true);
-      await authService.signUp(email.trim(), password, username.trim());
-      Alert.alert(
-        '✅ נשלח מייל אימות',
-        `שלחנו קוד אימות ל-${email}\n\nבדוק את תיבת הדואר שלך (כולל ספאם) ולחץ על הקישור לאימות החשבון.`,
-        [
-          {
-            text: 'הבנתי',
-            onPress: () => navigation.replace('Login'),
-          },
-        ]
-      );
+
+      // Check if username already exists
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username.trim())
+        .maybeSingle();
+
+      if (existingUser) {
+        setError('שם המשתמש כבר תפוס, נסה שם אחר');
+        return;
+      }
+
+      const data = await authService.signUp(email.trim(), password, username.trim());
+
+      // Supabase returns identities:[] when email already exists (no error thrown)
+      if (data?.user && (!data.user.identities || data.user.identities.length === 0)) {
+        setError('כתובת המייל כבר רשומה במערכת');
+        return;
+      }
+
+      const msg = `שלחנו קישור אימות ל-${email.trim()}\nבדוק את תיבת הדואר (כולל ספאם) ולחץ על הקישור.`;
+
+      if (Platform.OS === 'web') {
+        setSuccessMsg(msg);
+      } else {
+        Alert.alert('✅ נשלח מייל אימות', msg, [{ text: 'הבנתי', onPress: () => navigation.replace('Login') }]);
+      }
     } catch (e: any) {
       console.error('Signup failed:', e);
-      if (e.message?.includes('already registered')) {
-        setError('המייל כבר רשום במערכת');
+      if (e.message?.includes('already registered') || e.message?.includes('already been registered')) {
+        setError('כתובת המייל כבר רשומה במערכת');
       } else {
         setError(e.message || 'הרשמה נכשלה');
       }
@@ -148,6 +170,15 @@ export default function SignupScreen({ navigation }: Props) {
 
           {!!error && <Text style={[styles.error, { color: c.danger }]}>{error}</Text>}
 
+          {!!successMsg && (
+            <View style={[styles.successBox, { backgroundColor: '#0d2e1a', borderColor: '#1a5c33' }]}>
+              <Text style={styles.successText}>{successMsg}</Text>
+              <TouchableOpacity onPress={() => navigation.replace('Login')} style={styles.successBtn}>
+                <Text style={{ color: '#00D5FF', fontWeight: '700', fontSize: 14 }}>חזור להתחברות</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <TouchableOpacity
             style={[styles.primaryBtn, { backgroundColor: formValid ? c.primary : c.disabled, opacity: loading ? 0.7 : 1 }]}
             onPress={handleSignup}
@@ -215,4 +246,7 @@ const styles = StyleSheet.create({
   link: { fontSize: 14, fontWeight: '600' },
   bottomActions: { alignItems: 'center', marginTop: 16 },
   terms: { textAlign: 'center', fontSize: 12, lineHeight: 18, marginTop: 6 },
+  successBox: { borderWidth: 1, borderRadius: 12, padding: 14, gap: 10 },
+  successText: { color: '#4ade80', fontSize: 14, lineHeight: 20, textAlign: 'center' },
+  successBtn: { alignItems: 'center', marginTop: 4 },
 });
