@@ -176,14 +176,17 @@ export default function RootNavigator() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // onAuthStateChange fires on load too (including after email confirmation redirect)
+    // Fallback: if onAuthStateChange doesn't fire, default to logged out
+    const timeout = setTimeout(() => setIsLoggedIn((prev) => prev === null ? false : prev), 2000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      clearTimeout(timeout);
       // Don't auto-login after signup until email is confirmed
       if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at === null) return;
       setIsLoggedIn(!!session);
     });
 
-    return () => subscription.unsubscribe();
+    return () => { subscription.unsubscribe(); clearTimeout(timeout); };
   }, []);
 
   if (isLoggedIn === null) {
