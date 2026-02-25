@@ -76,8 +76,8 @@ export default function SignupScreen({ navigation }: Props) {
         return;
       }
 
-      const msg = `שלחנו קישור אימות ל-${email.trim()}\nבדוק את תיבת הדואר (כולל ספאם) ולחץ על הקישור.`;
-
+      // email_confirmed_at is null = needs verification, show message and stay on screen
+      const msg = `רון המלך שלח לך עכשיו קישור אימות ל-${email.trim()}\nבדוק את תיבת הדואר (כולל ספאם) ולחץ על הקישור.`;
       if (Platform.OS === 'web') {
         setSuccessMsg(msg);
       } else {

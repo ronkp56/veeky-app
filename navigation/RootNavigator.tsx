@@ -176,25 +176,15 @@ export default function RootNavigator() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
-    checkAuth();
-    
-    // Listen to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // onAuthStateChange fires on load too (including after email confirmation redirect)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Don't auto-login after signup until email is confirmed
+      if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at === null) return;
       setIsLoggedIn(!!session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  const checkAuth = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsLoggedIn(!!session);
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      setIsLoggedIn(false);
-    }
-  };
 
   if (isLoggedIn === null) {
     return (
